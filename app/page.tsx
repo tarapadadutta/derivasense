@@ -2115,10 +2115,10 @@ export default function Home() {
         className="footer"
         style={{
           display: "flex",
-          justifyContent:
-            "space-between",
+          justifyContent: "space-between",
           gap: 20,
           flexWrap: "wrap",
+          alignItems: "center",
         }}
       >
         <span>
@@ -2133,10 +2133,23 @@ export default function Home() {
           {lastRefresh
             ? `Updated ${new Date(
                 lastRefresh
-              ).toLocaleTimeString(
-                "en-IN"
-              )}`
+              ).toLocaleTimeString("en-IN")}`
             : "Updating..."}
+        </span>
+
+        <span
+          style={{
+            width: "100%",
+            textAlign: "center",
+            fontSize: 11,
+            lineHeight: 1.5,
+            opacity: 0.65,
+            marginTop: 8,
+          }}
+        >
+          Educational and informational purposes only. Not financial, investment,
+          or trading advice. DerivaSense AI is not registered with SEBI as an
+          investment advisor or research analyst.
         </span>
       </footer>
     </div>
