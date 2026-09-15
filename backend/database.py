@@ -5,10 +5,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://postgres:durga123@@localhost:5432/derivasense"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set")
+
+# Neon/Vercel may provide a PostgreSQL URL using postgres://.
+# SQLAlchemy expects postgresql:// or postgresql+psycopg2://.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgres://",
+        "postgresql://",
+        1,
+    )
 
 engine = create_engine(
     DATABASE_URL,
