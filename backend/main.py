@@ -37,6 +37,9 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="DerivaSense AI API",
     version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
 )
 
 
@@ -68,7 +71,7 @@ app.add_middleware(
 # ROOT
 # ============================================================
 
-@app.get("/")
+@app.get("/api/")
 def root():
 
     return {
@@ -81,7 +84,7 @@ def root():
 # HEALTH CHECK
 # ============================================================
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
 
     return {
@@ -94,7 +97,7 @@ def health():
 # ============================================================
 
 @app.post(
-    "/auth/register",
+    "/api/auth/register",
     response_model=UserResponse,
 )
 def register(
@@ -140,7 +143,7 @@ def register(
 # ============================================================
 
 @app.post(
-    "/auth/login",
+    "/api/auth/login",
     response_model=Token,
 )
 def login(
@@ -181,7 +184,7 @@ def login(
 # ============================================================
 
 @app.get(
-    "/auth/me",
+    "/api/auth/me",
     response_model=UserResponse,
 )
 def get_me(
