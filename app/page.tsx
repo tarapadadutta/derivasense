@@ -20,6 +20,7 @@ import type { MarketData } from "../lib/marketTypes";
 
 import Header from "../components/Header";
 import Sidebar, { Page } from "../components/Sidebar";
+import AdminUsers from "../components/AdminUsers";
 import Charts from "../components/Charts";
 import Analysis from "../components/Analysis";
 import Strategy from "../components/Strategy";
@@ -446,7 +447,7 @@ function VixPanel({
 
         fill: true,
 
-        pointRadius: 2,
+        pointRadius: 0,
 
         pointHoverRadius: 5,
 
@@ -1309,11 +1310,7 @@ function DashboardHome({
   return (
     <section
       className="page-workspace"
-      style={{
-        maxWidth: 1400,
-        margin: "0 auto",
-      }}
-    >
+     >
       {/* HEADER */}
 
       <div className="page-heading">
@@ -1819,10 +1816,119 @@ export default function Home() {
     );
 
   const [menuOpen, setMenuOpen] =
-    useState(false);
-  const [signInOpen, setSignInOpen] = useState(false);  
+  useState(false);
 
-  const [lastRefresh, setLastRefresh] =
+const [signInOpen, setSignInOpen] =
+  useState(false);
+
+const [signInEmail, setSignInEmail] =
+  useState("");
+
+const [signInPassword, setSignInPassword] =
+  useState("");
+
+const [signInLoading, setSignInLoading] =
+  useState(false);
+
+const [signInError, setSignInError] =
+  useState("");
+
+const [isAuthenticated, setIsAuthenticated] =
+  useState(false);
+const [currentUser, setCurrentUser] =
+  useState<{
+    id: number;
+    email: string;
+    full_name: string | null;
+    status: string;
+    role: string;
+  } | null>(null);
+
+const [authChecking, setAuthChecking] =
+  useState(true);
+
+useEffect(() => {
+  const checkAuthentication = async () => {
+    const token =
+      localStorage.getItem("derivasense_token");
+
+    if (!token) {
+      setAuthChecking(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "http://127.0.0.1:8000"
+            : ""
+        }/api/auth/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        localStorage.removeItem(
+          "derivasense_token"
+        );
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        return;
+      }
+
+      const user = await response.json();
+
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error(
+        "Authentication check failed:",
+        error
+      );
+
+      localStorage.removeItem(
+        "derivasense_token"
+      );
+
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    } finally {
+      setAuthChecking(false);
+    }
+  };
+
+  checkAuthentication();
+}, []);
+
+const [authMode, setAuthMode] =
+  useState<"signin" | "register">("signin");
+const [registerFullName, setRegisterFullName] =
+  useState("");
+
+const [registerEmail, setRegisterEmail] =
+  useState("");
+
+const [registerPassword, setRegisterPassword] =
+  useState("");
+
+const [registerConfirmPassword, setRegisterConfirmPassword] =
+  useState("");
+
+const [registerLoading, setRegisterLoading] =
+  useState(false);
+
+const [registerError, setRegisterError] =
+  useState("");
+
+const [registerSuccess, setRegisterSuccess] =
+  useState("");
+
+const [lastRefresh, setLastRefresh] =
     useState<number | null>(
       null
     );
@@ -1891,7 +1997,211 @@ export default function Home() {
       );
     };
   }, []);
+  /* ==========================================================
+     AUTHENTICATION
+     ========================================================== */
 
+  const handleSignIn = async () => {
+    setSignInError("");
+
+    if (!signInEmail.trim()) {
+      setSignInError("Please enter your email.");
+      return;
+    }
+
+    if (!signInPassword) {
+      setSignInError("Please enter your password.");
+      return;
+    }
+
+    setSignInLoading(true);
+
+    try {
+      const formData = new URLSearchParams();
+
+      formData.append(
+        "username",
+        signInEmail.trim()
+      );
+
+      formData.append(
+        "password",
+        signInPassword
+      );
+
+      const response = await fetch(
+  	`${
+   	 window.location.hostname === "localhost" ||
+    	window.location.hostname === "127.0.0.1"
+     	 ? "http://127.0.0.1:8000"
+      	: ""
+ 	 }/api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/x-www-form-urlencoded",
+          },
+          body: formData.toString(),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.detail ||
+            "Incorrect email or password"
+        );
+      }
+
+      localStorage.setItem(
+  "derivasense_token",
+  result.access_token
+);
+
+const meResponse = await fetch(
+  `${
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:8000"
+      : ""
+  }/api/auth/me`,
+  {
+    headers: {
+      Authorization: `Bearer ${result.access_token}`,
+    },
+  }
+);
+
+if (!meResponse.ok) {
+  localStorage.removeItem(
+    "derivasense_token"
+  );
+
+  throw new Error(
+    "Unable to load your user account."
+  );
+}
+
+const user = await meResponse.json();
+
+setCurrentUser(user);
+setIsAuthenticated(true);
+
+setSignInPassword("");
+
+setSignInOpen(false);
+    } catch (error) {
+      console.error(
+        "Sign-in failed:",
+        error
+      );
+
+      setSignInError(
+        error instanceof Error
+          ? error.message
+          : "Sign-in failed. Please try again."
+      );
+    } finally {
+      setSignInLoading(false);
+    }
+  };
+const handleRegister = async () => {
+  setRegisterError("");
+  setRegisterSuccess("");
+
+  const fullName = registerFullName.trim();
+  const email = registerEmail.trim();
+
+  if (!fullName) {
+    setRegisterError("Please enter your full name.");
+    return;
+  }
+
+  if (!email) {
+    setRegisterError("Please enter your email.");
+    return;
+  }
+
+  if (!registerPassword) {
+    setRegisterError("Please enter a password.");
+    return;
+  }
+
+  if (registerPassword.length < 8) {
+    setRegisterError(
+      "Password must be at least 8 characters long."
+    );
+    return;
+  }
+
+  if (
+    registerPassword !==
+    registerConfirmPassword
+  ) {
+    setRegisterError(
+      "Passwords do not match."
+    );
+    return;
+  }
+
+  setRegisterLoading(true);
+
+  try {
+    const response = await fetch(
+      `${
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:8000"
+          : ""
+      }/api/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          full_name: fullName,
+          email: email,
+          password: registerPassword,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.detail ||
+          "Unable to create account."
+      );
+    }
+
+    setRegisterSuccess(
+      "Account created successfully. You can now sign in."
+    );
+
+    setRegisterFullName("");
+    setRegisterEmail("");
+    setRegisterPassword("");
+    setRegisterConfirmPassword("");
+
+    setTimeout(() => {
+      setRegisterSuccess("");
+      setAuthMode("signin");
+      setSignInEmail(email);
+    }, 1200);
+  } catch (error) {
+    setRegisterError(
+      error instanceof Error
+        ? error.message
+        : "Unable to create account."
+    );
+  } finally {
+    setRegisterLoading(false);
+  }
+};
   /* ==========================================================
      PAGE CHANGE
      ========================================================== */
@@ -1911,13 +2221,18 @@ export default function Home() {
     return (
       <div className="app-shell">
         <Header
-          indices={[]}
-          marketOpen={false}
-          asOf="Loading..."
-          menuOpen={false}
-          onMenu={() => {}}
-          onSignIn={() => {}}
-        />
+  		indices={[]}
+  		marketOpen={false}
+  		asOf="Loading..."
+  		menuOpen={false}
+  		onMenu={() => {}}
+  		onSignIn={() => setSignInOpen(true)}
+  		isAuthenticated={isAuthenticated}
+  		onSignOut={() => {
+   		 localStorage.removeItem("derivasense_token");
+    		setIsAuthenticated(false);
+  		}}
+	/>
 
         <div className="loading-screen">
           Loading market data...
@@ -1937,22 +2252,23 @@ export default function Home() {
          ====================================================== */}
 
       <Header
-        indices={data.indices}
-        marketOpen={
-          data.marketOpen
-        }
-        asOf={data.asOf}
-        menuOpen={menuOpen}
-        onMenu={() =>
-          setMenuOpen(
-            (value) =>
-              !value
-          )
-        }
-        onSignIn={() => {
-          setSignInOpen(true);
-        }}
-      />
+  	indices={data.indices}
+ 	marketOpen={data.marketOpen}
+  	asOf={data.asOf}
+  	menuOpen={menuOpen}
+  	onMenu={() =>
+    	setMenuOpen((value) => !value)
+  	}
+  	onSignIn={() => {
+    	setSignInError("");
+    	setSignInOpen(true);
+  	}}
+  	isAuthenticated={isAuthenticated}
+  	onSignOut={() => {
+    	localStorage.removeItem("derivasense_token");
+    	setIsAuthenticated(false);
+  	}}
+    />
 
       {/* ======================================================
           SIDEBAR
@@ -1968,14 +2284,18 @@ export default function Home() {
           />
 
           <Sidebar
-            page={page}
-            setPage={
-              changePage
-            }
-            onSignIn={() => {
-              setSignInOpen(true);
-            }}
-          />
+  	page={page}
+  	setPage={changePage}
+  	onSignIn={() => {
+    	setSignInOpen(true);
+  	}}
+ 	 onSignOut={() => {
+  	localStorage.removeItem("derivasense_token");
+  	setIsAuthenticated(false);
+  	setCurrentUser(null);
+	}}
+  	isAdmin={currentUser?.role?.toUpperCase() === "ADMIN"}
+	/>
         </>
       )}
 
@@ -1984,54 +2304,108 @@ export default function Home() {
          ====================================================== */}
 
       <main className="content">
-        {page ===
-          "dashboard" && (
-          <DashboardHome
-            data={data}
-          />
-        )}
+  	{!isAuthenticated ? (
+   	 <section
+     	 className="page-workspace"
+     	 style={{
+        minHeight: "70vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+     	 }}
+   	 >
+      <div
+        className="card workspace-card"
+        style={{
+          width: "100%",
+          maxWidth: 520,
+          textAlign: "center",
+          padding: 40,
+        }}
+      >
+        <div className="eyebrow">
+          DERIVASENSE AI
+        </div>
 
-        {page === "charts" && (
-          <Charts
-            data={data}
-          />
-        )}
+        <h1
+          className="page-title"
+          style={{ marginTop: 10 }}
+        >
+          Sign In Required
+        </h1>
 
-        {page ===
-          "analysis" && (
-          <Analysis
-            data={data}
-          />
-        )}
+        <p
+          className="sub"
+          style={{
+            marginTop: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          Please sign in to access the Pro Options
+          Terminal and live market dashboard.
+        </p>
 
-        {page ===
-          "strategy" && (
-          <Strategy
-            data={data}
-          />
-        )}
+        <button
+          className="signin-submit"
+          style={{
+            marginTop: 24,
+            minWidth: 160,
+          }}
+          onClick={() => setSignInOpen(true)}
+        >
+          SIGN IN
+        </button>
+      </div>
+    </section>
+  ) : (
+    <>
+      {page === "dashboard" && (
+        <DashboardHome
+          data={data}
+        />
+      )}
 
-        {page ===
-          "watchlist" && (
-          <Watchlist
-            data={data}
-          />
-        )}
+      {page === "charts" && (
+        <Charts
+          data={data}
+        />
+      )}
 
-        {page ===
-          "market" && (
-          <MarketPage
-            data={data}
-          />
-        )}
+      {page === "analysis" && (
+        <Analysis
+          data={data}
+        />
+      )}
 
-        {page ===
-          "settings" && (
-          <SettingsPage
-            data={data}
-          />
-        )}
-      </main>
+      {page === "strategy" && (
+        <Strategy
+          data={data}
+        />
+      )}
+
+      {page === "watchlist" && (
+        <Watchlist
+          data={data}
+        />
+      )}
+
+      {page === "market" && (
+        <MarketPage
+          data={data}
+        />
+      )}
+
+      {page === "settings" && (
+        <SettingsPage
+          data={data}
+        />
+      )}
+	{page === "admin-users" && currentUser?.role === "ADMIN" && (
+  	<AdminUsers />
+	)}
+    </>
+  )}
+</main>
       {/* ======================================================
           SIGN IN MODAL
         ====================================================== */}
@@ -2052,12 +2426,16 @@ export default function Home() {
                 </div>
 
                 <h2 className="signin-title">
-                  Sign In
-                </h2>
+  			{authMode === "signin"
+   		 	? "Sign In"
+		    	: "Create Account"}
+		</h2>
 
                 <div className="sub">
-                  Access your Pro Options Terminal
-                </div>
+  			{authMode === "signin"
+   		 	? "Access your Pro Options Terminal"
+   		 	: "Create your DerivaSense AI account"}
+	      </div>
               </div>
 
               <button
@@ -2067,38 +2445,263 @@ export default function Home() {
               >
                 ×
               </button>
-            </div>
+                        </div>
 
-            <div className="signin-form">
-
-              <label>
-                EMAIL
-              </label>
-
-              <input
-                type="email"
-                placeholder="Enter your email"
-              />
-
-              <label>
-                PASSWORD
-              </label>
-
-              <input
-                type="password"
-                placeholder="Enter your password"
-              />
-
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginTop: 20,
+                marginBottom: 20,
+              }}
+            >
               <button
-                className="signin-submit"
+                type="button"
                 onClick={() => {
-                  alert("Sign-in authentication will be connected next.");
+                  setAuthMode("signin");
+                  setSignInError("");
+                  setRegisterError("");
+                  setRegisterSuccess("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  borderRadius: 6,
+                  border:
+                    authMode === "signin"
+                      ? "1px solid rgba(77,163,255,0.8)"
+                      : "1px solid #202a34",
+                  background:
+                    authMode === "signin"
+                      ? "rgba(77,163,255,0.12)"
+                      : "transparent",
+                  color:
+                    authMode === "signin"
+                      ? "#4da3ff"
+                      : "#81909d",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 700,
                 }}
               >
                 SIGN IN
               </button>
 
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("register");
+                  setSignInError("");
+                  setRegisterError("");
+                  setRegisterSuccess("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  borderRadius: 6,
+                  border:
+                    authMode === "register"
+                      ? "1px solid rgba(77,163,255,0.8)"
+                      : "1px solid #202a34",
+                  background:
+                    authMode === "register"
+                      ? "rgba(77,163,255,0.12)"
+                      : "transparent",
+                  color:
+                    authMode === "register"
+                      ? "#4da3ff"
+                      : "#81909d",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                CREATE ACCOUNT
+              </button>
             </div>
+
+            {authMode === "signin" ? (
+  <div className="signin-form">
+
+    <label>
+      EMAIL
+    </label>
+
+    <input
+      type="email"
+      placeholder="Enter your email"
+      value={signInEmail}
+      onChange={(e) =>
+        setSignInEmail(e.target.value)
+      }
+      autoComplete="email"
+    />
+
+    <label>
+      PASSWORD
+    </label>
+
+    <input
+      type="password"
+      placeholder="Enter your password"
+      value={signInPassword}
+      onChange={(e) =>
+        setSignInPassword(e.target.value)
+      }
+      autoComplete="current-password"
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleSignIn();
+        }
+      }}
+    />
+
+    {signInError && (
+      <div
+        style={{
+          marginTop: 8,
+          marginBottom: 10,
+          padding: "9px 10px",
+          border:
+            "1px solid rgba(255,92,87,0.35)",
+          borderRadius: 6,
+          color: "#ff5c57",
+          background:
+            "rgba(255,92,87,0.08)",
+          fontSize: 12,
+        }}
+      >
+        {signInError}
+      </div>
+    )}
+
+    <button
+      className="signin-submit"
+      onClick={handleSignIn}
+      disabled={signInLoading}
+    >
+      {signInLoading
+        ? "SIGNING IN..."
+        : "SIGN IN"}
+    </button>
+
+  </div>
+) : (
+  <div className="signin-form">
+
+    <label>
+      FULL NAME
+    </label>
+
+    <input
+      type="text"
+      placeholder="Enter your full name"
+      value={registerFullName}
+      onChange={(e) =>
+        setRegisterFullName(e.target.value)
+      }
+      autoComplete="name"
+    />
+
+    <label>
+      EMAIL
+    </label>
+
+    <input
+      type="email"
+      placeholder="Enter your email"
+      value={registerEmail}
+      onChange={(e) =>
+        setRegisterEmail(e.target.value)
+      }
+      autoComplete="email"
+    />
+
+    <label>
+      PASSWORD
+    </label>
+
+    <input
+      type="password"
+      placeholder="Create a password"
+      value={registerPassword}
+      onChange={(e) =>
+        setRegisterPassword(e.target.value)
+      }
+      autoComplete="new-password"
+    />
+
+    <label>
+      CONFIRM PASSWORD
+    </label>
+
+    <input
+      type="password"
+      placeholder="Confirm your password"
+      value={registerConfirmPassword}
+      onChange={(e) =>
+        setRegisterConfirmPassword(
+          e.target.value
+        )
+      }
+      autoComplete="new-password"
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleRegister();
+        }
+      }}
+    />
+
+    {registerError && (
+      <div
+        style={{
+          marginTop: 8,
+          marginBottom: 10,
+          padding: "9px 10px",
+          border:
+            "1px solid rgba(255,92,87,0.35)",
+          borderRadius: 6,
+          color: "#ff5c57",
+          background:
+            "rgba(255,92,87,0.08)",
+          fontSize: 12,
+        }}
+      >
+        {registerError}
+      </div>
+    )}
+
+    {registerSuccess && (
+      <div
+        style={{
+          marginTop: 8,
+          marginBottom: 10,
+          padding: "9px 10px",
+          border:
+            "1px solid rgba(80,200,120,0.35)",
+          borderRadius: 6,
+          color: "#50c878",
+          background:
+            "rgba(80,200,120,0.08)",
+          fontSize: 12,
+        }}
+      >
+        {registerSuccess}
+      </div>
+    )}
+
+    <button
+      className="signin-submit"
+      onClick={handleRegister}
+      disabled={registerLoading}
+    >
+      {registerLoading
+        ? "CREATING ACCOUNT..."
+        : "CREATE ACCOUNT"}
+    </button>
+
+  </div>
+)}
 
             <div className="signin-modal-footer">
               Demo authentication interface

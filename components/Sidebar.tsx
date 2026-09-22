@@ -7,8 +7,8 @@ export type Page =
   | "strategy"
   | "watchlist"
   | "market"
-  | "settings";
-
+  | "settings"
+  | "admin-users";
 const workspaceItems: Array<[Page, string, string]> = [
   ["dashboard", "⌂", "Dashboard"],
   ["charts", "◒", "Charts"],
@@ -22,14 +22,16 @@ type SidebarProps = {
   page: Page;
   setPage: (page: Page) => void;
   onSignIn: () => void;
+  onSignOut: () => void;
+  isAdmin: boolean;
 };
-
 export default function Sidebar({
   page,
   setPage,
   onSignIn,
+  onSignOut,
+  isAdmin,
 }: SidebarProps) {
-
   return (
     <aside className="sidebar">
 
@@ -85,11 +87,38 @@ export default function Sidebar({
 
       </nav>
 
-      {/* SYSTEM */}
+            {/* SYSTEM */}
 
       <div className="sidebar-section-title system-title">
         SYSTEM
       </div>
+
+      {isAdmin && (
+        <>
+          <div className="sidebar-section-title system-title">
+            ADMINISTRATION
+          </div>
+
+          <button
+            className={`side-button ${
+              page === "admin-users" ? "active" : ""
+            }`}
+            onClick={() => setPage("admin-users")}
+          >
+            <span className="side-icon">
+              👥
+            </span>
+
+            <span className="side-label">
+              User Management
+            </span>
+
+            {page === "admin-users" && (
+              <span className="side-active-indicator" />
+            )}
+          </button>
+        </>
+      )}
 
       <button
         className={`side-button ${
@@ -111,31 +140,32 @@ export default function Sidebar({
         )}
 
       </button>
+      
 
       {/* SPACER */}
 
       <div className="sidebar-spacer" />
 
-      {/* SIGN IN */}
+      {/* SIGN OUT */}
 
-      <div className="sidebar-signin-container">
+	<div className="sidebar-signin-container">
 
-        <button
-          className="sidebar-signin"
-          onClick={onSignIn}
-        >
+  	<button
+    className="sidebar-signin"
+    onClick={onSignOut}
+  	>
 
-          <span className="signin-lock">
-            ⇥
-          </span>
+    	<span className="signin-lock">
+      	⇥
+    	</span>
 
-          <span>
-            SIGN IN
-          </span>
+    <span>
+      SIGN OUT
+    </span>
 
-        </button>
+  </button>
 
-      </div>
+</div>
 
       {/* FOOTER */}
 

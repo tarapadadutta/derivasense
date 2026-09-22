@@ -105,6 +105,8 @@ def authenticate_user(
 ) -> Optional[User]:
     """
     Authenticate a user using email and password.
+
+    Only ACTIVE + APPROVED users are allowed to log in.
     """
 
     user = (
@@ -116,9 +118,15 @@ def authenticate_user(
     if user is None:
         return None
 
+    # Account disabled
     if not user.is_active:
         return None
 
+    # Account must be approved by an administrator
+    if user.status != "APPROVED":
+        return None
+
+    # Verify password
     if not verify_password(
         password,
         user.hashed_password
@@ -180,6 +188,10 @@ def get_current_user(
 ):
     """
     Validate JWT token and return the current user.
+
+    The account must remain:
+        - active
+        - approved
     """
 
     credentials_exception = HTTPException(
@@ -215,7 +227,32 @@ def get_current_user(
     if user is None:
         raise credentials_exception
 
+    # Disabled account
     if not user.is_active:
         raise credentials_exception
 
+    # Pending / rejected / suspended account
+    if user.status != "APPROVED":
+        raise credentials_exception
+
     return user
+
+
+# ============================================================
+# ADMIN AUTHORIZATION
+# ============================================================
+
+def get_current_admin(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Allow access only to approved administrator accounts.
+    """
+
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator access required"
+        )
+
+    return current_user
