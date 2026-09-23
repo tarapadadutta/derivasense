@@ -681,11 +681,11 @@ export async function fetchMarketData(): Promise<MarketData> {
      DASHBOARD DATA
      ======================================================= */
 
-  try {
+    try {
 
     const response =
       await fetch(
-        `/dashboard_data.json?t=${cacheBust}`,
+        `/api/dashboard`,
         {
           cache: "no-store",
         }
@@ -693,25 +693,28 @@ export async function fetchMarketData(): Promise<MarketData> {
 
     if (response.ok) {
 
-  const live =
-    (await response.json()) as
-      Partial<MarketData>;
+      const apiResponse =
+        await response.json();
 
-  dashboardAsOf =
-    live.asOf ??
-    dashboardAsOf;
+      const live =
+        apiResponse.data as
+          Partial<MarketData>;
 
-  result =
-    mergeData(
-      result,
-      live
-    );
-}
+      dashboardAsOf =
+        live.asOf ??
+        dashboardAsOf;
+
+      result =
+        mergeData(
+          result,
+          live
+        );
+    }
 
   } catch (error) {
 
     console.error(
-      "dashboard_data.json error:",
+      "dashboard API error:",
       error
     );
   }
