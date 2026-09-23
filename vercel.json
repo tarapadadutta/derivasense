@@ -11,6 +11,12 @@
   },
   "rewrites": [
     {
+      "source": "/api/dashboard",
+      "destination": {
+        "service": "frontend"
+      }
+    },
+    {
       "source": "/api/:path*",
       "destination": {
         "service": "backend"
