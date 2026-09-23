@@ -672,6 +672,7 @@ export async function fetchMarketData(): Promise<MarketData> {
   let result: MarketData = {
     ...EMPTY_DATA,
   };
+  let dashboardAsOf = EMPTY_DATA.asOf;
 
   const cacheBust =
     Date.now();
@@ -692,16 +693,20 @@ export async function fetchMarketData(): Promise<MarketData> {
 
     if (response.ok) {
 
-      const live =
-        (await response.json()) as
-          Partial<MarketData>;
+  const live =
+    (await response.json()) as
+      Partial<MarketData>;
 
-      result =
-        mergeData(
-          result,
-          live
-        );
-    }
+  dashboardAsOf =
+    live.asOf ??
+    dashboardAsOf;
+
+  result =
+    mergeData(
+      result,
+      live
+    );
+}
 
   } catch (error) {
 
@@ -736,6 +741,13 @@ export async function fetchMarketData(): Promise<MarketData> {
           result,
           live
         );
+	/*
+   * IMPORTANT:
+   * dashboard_data.json is the authoritative
+   * source for the dashboard timestamp.
+   * Do not allow fiidii_data.json to overwrite it.
+   */
+  result.asOf = dashboardAsOf;
     }
 
   } catch (error) {

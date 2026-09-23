@@ -1,1 +1,336 @@
-export type IndexData = { symbol: string; spot: number; future: number | null; vwap: number | null; chg: number; chgPct: number; atm: number; support: number; resistance: number; supportNear?: number; resistanceNear?: number; pcrOI: number; pcrCOI: number; }; /* ========================================================= VIX ========================================================= */ export type VixData = { value: number; chg: number; chgPct: number; }; /* ========================================================= SECTOR ========================================================= */ export type SectorData = { name: string; chg: number; }; /* ========================================================= TOP GAINERS / LOSERS ========================================================= */ export type MoverData = { symbol: string; price: number; chg: number; }; /* ========================================================= MARKET BREADTH ========================================================= */ export type MarketStats = { advances: number; declines: number; unchanged: number; }; /* ========================================================= FII / DII ========================================================= */ export type FiiDiiData = { date?: string; buyFII?: number; sellFII?: number; netFII: number; buyDII?: number; sellDII?: number; netDII: number; }; /* ========================================================= OPTION CHAIN ========================================================= [ Call OI, Call COI, Call Volume, Call IV, Call LTP, Call Change, Strike, Put Change, Put LTP, Put IV, Put Volume, Put COI, Put OI ] ========================================================= */ export type OptionChainRow = [ number, number, number, number, number, number, number, number, number, number, number, number, number ]; /* ========================================================= STRIKE OI / STRIKE COI ========================================================= Actual JSON format: [ strike, call value, put value ] Example: [23900, 909, 10533] ========================================================= */ export type StrikeRow = [ number, number, number ]; /* ========================================================= GENERIC TREND ROW ========================================================= Example: ["09:21", 1074] or: ["09:21", 100, 200] ========================================================= */ export type TrendRow = [ string, ...number[] ]; /* ========================================================= COI TREND ========================================================= Your actual dashboard_data.json contains: ["09:21", 1074.0] ["09:24", 949.0] ["09:27", 446.0] Therefore this MUST be a tuple, not an object. ========================================================= */ export type CoiTrendRow = [ string, number ]; /* ========================================================= TIME / VALUE ROW ========================================================= */ export type TimeValueRow = [ string, number ]; /* ========================================================= BIG PLAYER DATA ========================================================= */ export type BigPlayerData = { resistanceStrike: number; supportStrike: number; callOiLakh: number; putOiLakh: number; callRatio: number; putRatio: number; bigPlayerSide: | "CALL" | "PUT" | string; }; /* ========================================================= MOST ACTIVE CONTRACT ========================================================= */ export type MostActiveContract = [ string, number, number, number ]; /* ========================================================= MARKET DATA ========================================================= */ export type MarketData = { asOf: string; marketOpen: boolean; /* ======================================================= INDICES ======================================================= */ indices: IndexData[]; /* ======================================================= VIX ======================================================= */ vix: VixData; /* ======================================================= SECTORS ======================================================= */ sectors: SectorData[]; /* ======================================================= GAINERS / LOSERS ======================================================= */ gainers: MoverData[]; losers: MoverData[]; /* ======================================================= FII / DII TRENDS ======================================================= */ fiiPctTrend?: TrendRow[]; flowTrend?: TrendRow[]; /* ======================================================= STRIKE OI ======================================================= */ strikeOI?: Record< string, StrikeRow[] >; /* ======================================================= STRIKE COI ======================================================= */ strikeCOI?: Record< string, StrikeRow[] >; /* ======================================================= STRADDLE TREND ======================================================= */ straddleTrend?: Record< string, TrendRow[] >; /* ======================================================= CHANGE OF COI TREND ======================================================= */ coiTrend?: Record< string, CoiTrendRow[] >; /* ======================================================= PCR TREND ======================================================= */ pcrTrend?: Record< string, TrendRow[] >; /* ======================================================= PRICE TREND ======================================================= */ priceTrend?: Record< string, TrendRow[] >; /* ======================================================= VIX TREND ======================================================= */ vixTrend?: TrendRow[]; /* ======================================================= BIG PLAYER ======================================================= */ bigPlayer?: Record< string, BigPlayerData >; /* ======================================================= OPTION CHAIN ======================================================= */ optionChain?: Record< string, OptionChainRow[] >; /* ======================================================= MARKET BREADTH ======================================================= */ marketStats?: MarketStats; /* ======================================================= MOST ACTIVE ======================================================= */ mostActive?: { calls?: MostActiveContract[]; puts?: MostActiveContract[]; byOI?: MostActiveContract[]; }; /* ======================================================= FII / DII ======================================================= */ fiidii?: FiiDiiData; };
+export type IndexData = {
+  symbol: string;
+  spot: number;
+  future: number | null;
+  vwap: number | null;
+  chg: number;
+  chgPct: number;
+  atm: number;
+  support: number;
+  resistance: number;
+  supportNear?: number;
+  resistanceNear?: number;
+  pcrOI: number;
+  pcrCOI: number;
+};
+
+/* =========================================================
+   VIX
+   ========================================================= */
+
+export type VixData = {
+  value: number;
+  chg: number;
+  chgPct: number;
+};
+
+/* =========================================================
+   SECTOR
+   ========================================================= */
+
+export type SectorData = {
+  name: string;
+  chg: number;
+};
+
+/* =========================================================
+   TOP GAINERS / LOSERS
+   ========================================================= */
+
+export type MoverData = {
+  symbol: string;
+  price: number;
+  chg: number;
+};
+
+/* =========================================================
+   MARKET BREADTH
+   ========================================================= */
+
+export type MarketStats = {
+  advances: number;
+  declines: number;
+  unchanged: number;
+};
+
+/* =========================================================
+   FII / DII
+   ========================================================= */
+
+export type FiiDiiData = {
+  date?: string;
+  buyFII?: number;
+  sellFII?: number;
+  netFII: number;
+  buyDII?: number;
+  sellDII?: number;
+  netDII: number;
+};
+
+/* =========================================================
+   FII / DII PARTICIPANT ACTIVITY
+   ========================================================= */
+
+export type ParticipantActivity = {
+  participant: string;
+  segment: string;
+  instrument: string;
+  change: number;
+  activity: string;
+  views: "Bullish" | "Bearish" | string;
+};
+
+/* =========================================================
+   OPTION CHAIN
+   =========================================================
+   [ Call OI, Call COI, Call Volume, Call IV, Call LTP,
+     Call Change, Strike, Put Change, Put LTP, Put IV,
+     Put Volume, Put COI, Put OI ]
+   ========================================================= */
+
+export type OptionChainRow = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number
+];
+
+/* =========================================================
+   STRIKE OI / STRIKE COI
+   =========================================================
+   Actual JSON format:
+   [ strike, call value, put value ]
+
+   Example:
+   [23900, 909, 10533]
+   ========================================================= */
+
+export type StrikeRow = [
+  number,
+  number,
+  number
+];
+
+/* =========================================================
+   GENERIC TREND ROW
+   =========================================================
+   Example:
+   ["09:21", 1074]
+   or:
+   ["09:21", 100, 200]
+   ========================================================= */
+
+export type TrendRow = [
+  string,
+  ...number[]
+];
+
+/* =========================================================
+   COI TREND
+   =========================================================
+   Your actual dashboard_data.json contains:
+   ["09:21", 1074.0]
+   ["09:24", 949.0]
+   ["09:27", 446.0]
+
+   Therefore this MUST be a tuple, not an object.
+   ========================================================= */
+
+export type CoiTrendRow = [
+  string,
+  number
+];
+
+/* =========================================================
+   TIME / VALUE ROW
+   ========================================================= */
+
+export type TimeValueRow = [
+  string,
+  number
+];
+
+/* =========================================================
+   BIG PLAYER DATA
+   ========================================================= */
+
+export type BigPlayerData = {
+  resistanceStrike: number;
+  supportStrike: number;
+  callOiLakh: number;
+  putOiLakh: number;
+  callRatio: number;
+  putRatio: number;
+  bigPlayerSide:
+    | "CALL"
+    | "PUT"
+    | string;
+};
+
+/* =========================================================
+   MOST ACTIVE CONTRACT
+   ========================================================= */
+
+export type MostActiveContract = [
+  string,
+  number,
+  number,
+  number
+];
+
+/* =========================================================
+   MARKET DATA
+   ========================================================= */
+
+export type MarketData = {
+  asOf: string;
+  marketOpen: boolean;
+
+  /* =======================================================
+     INDICES
+     ======================================================= */
+
+  indices: IndexData[];
+
+  /* =======================================================
+     VIX
+     ======================================================= */
+
+  vix: VixData;
+
+  /* =======================================================
+     SECTORS
+     ======================================================= */
+
+  sectors: SectorData[];
+
+  /* =======================================================
+     GAINERS / LOSERS
+     ======================================================= */
+
+  gainers: MoverData[];
+  losers: MoverData[];
+
+  /* =======================================================
+     FII / DII TRENDS
+     ======================================================= */
+
+  fiiPctTrend?: TrendRow[];
+  flowTrend?: TrendRow[];
+
+  /* =======================================================
+     FII / DII PARTICIPANT ACTIVITY
+     ======================================================= */
+
+  participantActivityDate?: string;
+  participantActivity?: ParticipantActivity[];
+
+  /* =======================================================
+     STRIKE OI
+     ======================================================= */
+
+  strikeOI?: Record<
+    string,
+    StrikeRow[]
+  >;
+
+  /* =======================================================
+     STRIKE COI
+     ======================================================= */
+
+  strikeCOI?: Record<
+    string,
+    StrikeRow[]
+  >;
+
+  /* =======================================================
+     STRADDLE TREND
+     ======================================================= */
+
+  straddleTrend?: Record<
+    string,
+    TrendRow[]
+  >;
+
+  /* =======================================================
+     CHANGE OF COI TREND
+     ======================================================= */
+
+  coiTrend?: Record<
+    string,
+    CoiTrendRow[]
+  >;
+
+  /* =======================================================
+     PCR TREND
+     ======================================================= */
+
+  pcrTrend?: Record<
+    string,
+    TrendRow[]
+  >;
+
+  /* =======================================================
+     PRICE TREND
+     ======================================================= */
+
+  priceTrend?: Record<
+    string,
+    TrendRow[]
+  >;
+
+  /* =======================================================
+     VIX TREND
+     ======================================================= */
+
+  vixTrend?: TrendRow[];
+
+  /* =======================================================
+     BIG PLAYER
+     ======================================================= */
+
+  bigPlayer?: Record<
+    string,
+    BigPlayerData
+  >;
+
+  /* =======================================================
+     OPTION CHAIN
+     ======================================================= */
+
+  optionChain?: Record<
+    string,
+    OptionChainRow[]
+  >;
+
+  /* =======================================================
+     MARKET BREADTH
+     ======================================================= */
+
+  marketStats?: MarketStats;
+
+  /* =======================================================
+     MOST ACTIVE
+     ======================================================= */
+
+  mostActive?: {
+    calls?: MostActiveContract[];
+    puts?: MostActiveContract[];
+    byOI?: MostActiveContract[];
+  };
+
+  /* =======================================================
+     FII / DII
+     ======================================================= */
+
+  fiidii?: FiiDiiData;
+};

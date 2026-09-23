@@ -1,45 +1,15 @@
 {
-  "asOf": "13 Sep 2026, 12:23:43 IST",
+  "asOf": "23 Sep 2026, 08:05:53 IST",
   "fiidii": {
-    "date": "11 Sep 2026",
-    "buyFII": 12616.89,
-    "sellFII": 13547.79,
-    "netFII": -930.9,
-    "buyDII": 15109.58,
-    "sellDII": 13141.41,
-    "netDII": 1968.17
+    "date": "22 Sep 2026",
+    "buyFII": 9845.81,
+    "sellFII": 13655.8,
+    "netFII": -3809.99,
+    "buyDII": 14599.72,
+    "sellDII": 10479.65,
+    "netDII": 4120.07
   },
   "fiiPctTrend": [
-    [
-      "24 Aug",
-      9.9,
-      90.1
-    ],
-    [
-      "25 Aug",
-      10.29,
-      89.71
-    ],
-    [
-      "26 Aug",
-      10.81,
-      89.19
-    ],
-    [
-      "27 Aug",
-      9.83,
-      90.17
-    ],
-    [
-      "28 Aug",
-      9.63,
-      90.37
-    ],
-    [
-      "31 Aug",
-      9.39,
-      90.61
-    ],
     [
       "01 Sep",
       9.11,
@@ -84,39 +54,39 @@
       "11 Sep",
       11.23,
       88.77
+    ],
+    [
+      "15 Sep",
+      12.06,
+      87.94
+    ],
+    [
+      "16 Sep",
+      12.39,
+      87.61
+    ],
+    [
+      "17 Sep",
+      12.35,
+      87.65
+    ],
+    [
+      "18 Sep",
+      12.57,
+      87.43
+    ],
+    [
+      "21 Sep",
+      12.37,
+      87.63
+    ],
+    [
+      "22 Sep",
+      10.5,
+      89.5
     ]
   ],
   "flowTrend": [
-    [
-      "31 Aug",
-      -7985.88,
-      4588.88
-    ],
-    [
-      "01 Sep",
-      1143.38,
-      1846.94
-    ],
-    [
-      "02 Sep",
-      6688.37,
-      2812.98
-    ],
-    [
-      "03 Sep",
-      -2345.87,
-      4977.46
-    ],
-    [
-      "04 Sep",
-      -3111.94,
-      8930.12
-    ],
-    [
-      "07 Sep",
-      280.13,
-      566.76
-    ],
     [
       "08 Sep",
       -123.19,
@@ -136,6 +106,151 @@
       "11 Sep",
       -930.9,
       1968.17
+    ],
+    [
+      "15 Sep",
+      -2977.86,
+      2686.05
+    ],
+    [
+      "16 Sep",
+      -2032.61,
+      3908.23
+    ],
+    [
+      "17 Sep",
+      -3208.76,
+      3617.75
+    ],
+    [
+      "18 Sep",
+      599.54,
+      1019.69
+    ],
+    [
+      "21 Sep",
+      -576.2,
+      2797.27
+    ],
+    [
+      "22 Sep",
+      -3809.99,
+      4120.07
     ]
+  ],
+  "participantActivityDate": "22 September 2026",
+  "participantActivity": [
+    {
+      "participant": "FII",
+      "segment": "Cash",
+      "instrument": "Cash",
+      "change": -3810,
+      "activity": "Sell",
+      "views": "Bearish"
+    },
+    {
+      "participant": "FII",
+      "segment": "Future",
+      "instrument": "Future",
+      "change": -12362,
+      "activity": "Futures Sell",
+      "views": "Bearish"
+    },
+    {
+      "participant": "FII",
+      "segment": "CE",
+      "instrument": "CE",
+      "change": -18,
+      "activity": "Call Sell",
+      "views": "Bearish"
+    },
+    {
+      "participant": "FII",
+      "segment": "PE",
+      "instrument": "PE",
+      "change": 3796,
+      "activity": "Put Buy",
+      "views": "Bearish"
+    },
+    {
+      "participant": "PRO",
+      "segment": "Future",
+      "instrument": "Future",
+      "change": 8369,
+      "activity": "Futures Buy",
+      "views": "Bullish"
+    },
+    {
+      "participant": "PRO",
+      "segment": "CE",
+      "instrument": "CE",
+      "change": -127792,
+      "activity": "Call Sell",
+      "views": "Bearish"
+    },
+    {
+      "participant": "PRO",
+      "segment": "PE",
+      "instrument": "PE",
+      "change": -98111,
+      "activity": "Put Sell",
+      "views": "Bullish"
+    },
+    {
+      "participant": "DII",
+      "segment": "Cash",
+      "instrument": "Cash",
+      "change": 4120,
+      "activity": "Buy",
+      "views": "Bullish"
+    },
+    {
+      "participant": "DII",
+      "segment": "Future",
+      "instrument": "Future",
+      "change": 1,
+      "activity": "Futures Buy",
+      "views": "Bullish"
+    },
+    {
+      "participant": "DII",
+      "segment": "CE",
+      "instrument": "CE",
+      "change": 4517,
+      "activity": "Call Buy",
+      "views": "Bullish"
+    },
+    {
+      "participant": "DII",
+      "segment": "PE",
+      "instrument": "PE",
+      "change": -6371,
+      "activity": "Put Sell",
+      "views": "Bullish"
+    },
+    {
+      "participant": "RETAIL",
+      "segment": "Future",
+      "instrument": "Future",
+      "change": 3992,
+      "activity": "Futures Buy",
+      "views": "Bullish"
+    },
+    {
+      "participant": "RETAIL",
+      "segment": "CE",
+      "instrument": "CE",
+      "change": 123294,
+      "activity": "Call Buy",
+      "views": "Bullish"
+    },
+    {
+      "participant": "RETAIL",
+      "segment": "PE",
+      "instrument": "PE",
+      "change": 100686,
+      "activity": "Put Buy",
+      "views": "Bearish"
+    }
   ]
 }

@@ -576,6 +576,12 @@ function lineOptions(
     maintainAspectRatio: false,
 
     animation: false as const,
+    datasets: {
+  line: {
+    pointRadius: 0,
+    pointHoverRadius: 4,
+  },
+},
 
     interaction: {
       mode: "index" as const,
@@ -1821,7 +1827,7 @@ function PcrPanel({
           backgroundColor:
             `${INDEX_COLORS[symbol]}22`,
           borderWidth: 3,
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           fill: false,
@@ -1841,7 +1847,7 @@ function PcrPanel({
             "#ffffff22",
           borderWidth: 3,
           borderDash: [6, 4],
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           fill: false,
@@ -1968,7 +1974,11 @@ function CoiTrendPanel({
     [data, symbol]
   );
 
-  const chartData = useMemo(
+  /* ==========================================================
+     EXISTING COI LINE CHART
+     ========================================================== */
+
+  const lineChartData = useMemo(
     () => ({
       labels: rows.map(
         (r) => r[0]
@@ -1978,17 +1988,25 @@ function CoiTrendPanel({
         {
           label:
             "PUT COI SUM - CALL COI SUM",
+
           data: rows.map(
             (r) => Number(r[1])
           ),
+
           borderColor:
             INDEX_COLORS[symbol],
+
           backgroundColor:
             `${INDEX_COLORS[symbol]}22`,
+
           borderWidth: 3,
-          pointRadius: 2,
+
+          pointRadius: 0,
+
           pointHoverRadius: 5,
+
           tension: 0.25,
+
           fill: true,
         },
       ],
@@ -1996,54 +2014,475 @@ function CoiTrendPanel({
     [rows, symbol]
   );
 
+  /* ==========================================================
+     LINEAR REGRESSION TRENDLINE
+     
+     Uses time order as X:
+     0, 1, 2, 3, ...
+     
+     Y = PUT COI SUM - CALL COI SUM
+     ========================================================== */
+
+  const trendline = useMemo(() => {
+    const values = rows
+      .map((r) => Number(r[1]))
+      .filter((v) =>
+        Number.isFinite(v)
+      );
+
+    if (values.length < 2) {
+      return values;
+    }
+
+    const n = values.length;
+
+    let sumX = 0;
+    let sumY = 0;
+    let sumXY = 0;
+    let sumXX = 0;
+
+    for (
+      let i = 0;
+      i < n;
+      i++
+    ) {
+      const x = i;
+      const y = values[i];
+
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumXX += x * x;
+    }
+
+    const denominator =
+      n * sumXX -
+      sumX * sumX;
+
+    if (denominator === 0) {
+      return values;
+    }
+
+    const slope =
+      (n * sumXY -
+        sumX * sumY) /
+      denominator;
+
+    const intercept =
+      (sumY -
+        slope * sumX) /
+      n;
+
+    return values.map(
+      (_value, i) =>
+        intercept +
+        slope * i
+    );
+  }, [rows]);
+
+  /* ==========================================================
+     BAR + TRENDLINE CHART
+     ========================================================== */
+
+  const barChartData = useMemo(
+    () => ({
+      labels: rows.map(
+        (r) => r[0]
+      ),
+
+      datasets: [
+        {
+          type: "bar" as const,
+
+          label:
+            "PUT COI SUM - CALL COI SUM",
+
+          data: rows.map(
+            (r) => Number(r[1])
+          ),
+
+          backgroundColor:
+            rows.map((r) =>
+              Number(r[1]) < 0
+                ? "#ff3b30"
+                : "#31d17c"
+            ),
+
+          borderColor:
+            rows.map((r) =>
+              Number(r[1]) < 0
+                ? "#ff3b30"
+                : "#31d17c"
+            ),
+
+          borderWidth: 1,
+
+          borderRadius: 2,
+
+          barPercentage: 0.82,
+
+          categoryPercentage: 0.92,
+        },
+
+        {
+          type: "line" as const,
+
+          label:
+            "LINEAR TREND",
+
+          data: trendline,
+
+          borderColor:
+            "#ffff00",
+
+          backgroundColor:
+            "#ffff00",
+
+          borderWidth: 3,
+
+          pointRadius: 0,
+
+          pointHoverRadius: 4,
+
+          tension: 0,
+
+          fill: false,
+
+          order: 0,
+        },
+      ],
+    }),
+    [rows, trendline]
+  );
+
+  /* ==========================================================
+     BAR CHART OPTIONS
+     ========================================================== */
+
+  const barChartOptions: any = {
+    responsive: true,
+
+    maintainAspectRatio: false,
+
+    animation: false,
+
+    interaction: {
+      mode: "index",
+
+      intersect: false,
+    },
+
+    plugins: {
+      legend: {
+        display: true,
+
+        position: "top",
+
+        labels: {
+          color: "#dce5eb",
+
+          usePointStyle: true,
+
+          boxWidth: 10,
+        },
+      },
+
+      tooltip: {
+        enabled: true,
+
+        callbacks: {
+          label: (ctx: any) => {
+            const value =
+              Number(ctx.raw);
+
+            if (
+              ctx.dataset.type ===
+              "line"
+            ) {
+              return (
+                "Trend: " +
+                fmt(value)
+              );
+            }
+
+            return (
+              "COI CHANGE SUM: " +
+              signed(value)
+            );
+          },
+        },
+      },
+    },
+
+    scales: {
+      x: {
+        ticks: {
+          color: "#8d9ba7",
+
+          autoSkip: true,
+
+          maxTicksLimit: 20,
+
+          maxRotation: 45,
+
+          minRotation: 0,
+        },
+
+        grid: {
+          color:
+            "rgba(255,255,255,0.05)",
+        },
+
+        title: {
+          display: true,
+
+          text: "TIME",
+
+          color: "#9aa7b2",
+        },
+      },
+
+      y: {
+        beginAtZero: true,
+
+        ticks: {
+          color: "#8d9ba7",
+
+          callback: (
+            value: any
+          ) =>
+            fmt(
+              Number(value),
+              0
+            ),
+        },
+
+        grid: {
+          color: (
+            context: any
+          ) => {
+            if (
+              context.tick?.value ===
+              0
+            ) {
+              return "#ffffff";
+            }
+
+            return "rgba(255,255,255,0.08)";
+          },
+
+          lineWidth: (
+            context: any
+          ) => {
+            if (
+              context.tick?.value ===
+              0
+            ) {
+              return 1.5;
+            }
+
+            return 1;
+          },
+        },
+
+        title: {
+          display: true,
+
+          text:
+            "PUT COI SUM - CALL COI SUM",
+
+          color: "#9aa7b2",
+        },
+      },
+    },
+  };
+
   return (
-    <AnalysisCard
-      style={{
-        marginTop: 16,
-      }}
-    >
-      <div className="card-label">
-        COI TREND
-      </div>
+    <>
+      {/* ======================================================
+          PLOT 1 — COI CHANGE LINE
+         ====================================================== */}
 
-      <h2
+      <AnalysisCard
         style={{
-          margin:
-            "6px 0 4px",
+          marginTop: 16,
         }}
       >
-        {symbol} · Change of COI
-      </h2>
+        <div className="card-label">
+          COI TREND
+        </div>
 
-      <div className="sub">
-        PUT COI SUM − CALL COI
-        SUM against time
-      </div>
+        <h2
+          style={{
+            margin:
+              "6px 0 4px",
+          }}
+        >
+          {symbol} · Change of COI
+        </h2>
 
-      <div
+        <div className="sub">
+          PUT COI SUM − CALL COI
+          SUM against time
+        </div>
+
+        <div
+          style={{
+            position:
+              "relative",
+
+            width: "100%",
+
+            height: 430,
+
+            marginTop: 15,
+          }}
+        >
+          {rows.length ? (
+            <Line
+              key={`coi-trend-${symbol}`}
+              data={lineChartData}
+              options={lineOptions(
+                "COI DIFFERENCE"
+              )}
+            />
+          ) : (
+            <EmptyState
+              text={`No COI trend data available for ${symbol}.`}
+            />
+          )}
+        </div>
+      </AnalysisCard>
+
+      {/* ======================================================
+          PLOT 2 — COI CHANGE SUM BAR + TRENDLINE
+         ====================================================== */}
+
+      <AnalysisCard
         style={{
-          position:
-            "relative",
-          width: "100%",
-          height: 430,
-          marginTop: 15,
+          marginTop: 16,
         }}
       >
-        {rows.length ? (
-          <Line
-            key={`coi-trend-${symbol}`}
-            data={chartData}
-            options={lineOptions(
-              "COI DIFFERENCE"
-            )}
-          />
-        ) : (
-          <EmptyState
-            text={`No COI trend data available for ${symbol}.`}
-          />
-        )}
-      </div>
-    </AnalysisCard>
+        <div className="card-label">
+          CHANGE OF COI SUM
+        </div>
+
+        <h2
+          style={{
+            margin:
+              "6px 0 4px",
+          }}
+        >
+          {symbol} · COI Change Sum
+        </h2>
+
+        <div className="sub">
+          PUT COI SUM − CALL COI
+          SUM against time
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 18,
+            marginTop: 12,
+            flexWrap: "wrap",
+            fontSize: 11,
+          }}
+        >
+          <span>
+            <span
+              style={{
+                display:
+                  "inline-block",
+
+                width: 10,
+
+                height: 10,
+
+                borderRadius: 2,
+
+                background:
+                  "#31d17c",
+
+                marginRight: 6,
+              }}
+            />
+            POSITIVE
+          </span>
+
+          <span>
+            <span
+              style={{
+                display:
+                  "inline-block",
+
+                width: 10,
+
+                height: 10,
+
+                borderRadius: 2,
+
+                background:
+                  "#ff3b30",
+
+                marginRight: 6,
+              }}
+            />
+            NEGATIVE
+          </span>
+
+          <span>
+            <span
+              style={{
+                display:
+                  "inline-block",
+
+                width: 18,
+
+                height: 3,
+
+                background:
+                  "#ffff00",
+
+                marginRight: 6,
+
+                verticalAlign:
+                  "middle",
+              }}
+            />
+            LINEAR TREND
+          </span>
+        </div>
+
+        <div
+          style={{
+            position:
+              "relative",
+
+            width: "100%",
+
+            height: 430,
+
+            marginTop: 15,
+          }}
+        >
+          {rows.length ? (
+            <Bar
+              key={`coi-change-bar-${symbol}`}
+              data={barChartData as any}
+              options={
+                barChartOptions
+              }
+            />
+          ) : (
+            <EmptyState
+              text={`No COI change data available for ${symbol}.`}
+            />
+          )}
+        </div>
+      </AnalysisCard>
+    </>
   );
 }
 
@@ -2086,7 +2525,7 @@ function StraddlePanel({
           backgroundColor:
             `${INDEX_COLORS[symbol]}22`,
           borderWidth: 3,
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           fill: true,
@@ -2191,7 +2630,7 @@ function VixPanel({
           backgroundColor:
             "#ff4d6d22",
           borderWidth: 3,
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           fill: true,
@@ -2369,7 +2808,7 @@ function PricePanel({
           backgroundColor:
             "transparent",
           borderWidth: 3,
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           spanGaps: true,
@@ -2390,7 +2829,7 @@ function PricePanel({
           backgroundColor:
             "transparent",
           borderWidth: 3,
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           spanGaps: true,
@@ -2411,7 +2850,7 @@ function PricePanel({
           backgroundColor:
             "transparent",
           borderWidth: 3,
-          pointRadius: 2,
+          pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.25,
           spanGaps: true,
@@ -2812,6 +3251,17 @@ function FiiDiiPanel({
         0
     );
 
+  const participantActivity =
+    Array.isArray(
+      data.participantActivity
+    )
+      ? data.participantActivity
+      : [];
+
+  const participantActivityDate =
+    data.participantActivityDate ??
+    "";
+
   const flowRows =
     Array.isArray(
       raw(data)?.flowTrend
@@ -2896,7 +3346,7 @@ function FiiDiiPanel({
         backgroundColor:
           "transparent",
         borderWidth: 3,
-        pointRadius: 2,
+        pointRadius: 0,
         tension: 0.25,
       },
 
@@ -2910,7 +3360,7 @@ function FiiDiiPanel({
         backgroundColor:
           "transparent",
         borderWidth: 3,
-        pointRadius: 2,
+        pointRadius: 0,
         tension: 0.25,
       },
     ],
@@ -2926,6 +3376,10 @@ function FiiDiiPanel({
         marginTop: 16,
       }}
     >
+      {/* =====================================================
+          NET FII / DII
+         ===================================================== */}
+
       <AnalysisCard>
         <div className="card-label">
           FII / DII
@@ -3041,6 +3495,10 @@ function FiiDiiPanel({
         </div>
       </AnalysisCard>
 
+      {/* =====================================================
+          FII FUTURES
+         ===================================================== */}
+
       <AnalysisCard>
         <div className="card-label">
           FII FUTURES
@@ -3079,6 +3537,268 @@ function FiiDiiPanel({
           ) : (
             <EmptyState
               text="No FII long/short trend available."
+            />
+          )}
+        </div>
+      </AnalysisCard>
+
+      {/* =====================================================
+          PARTICIPANT ACTIVITY
+         ===================================================== */}
+
+      <AnalysisCard>
+        <div className="card-label">
+          PARTICIPANT ACTIVITY
+        </div>
+
+        <h2
+          style={{
+            margin:
+              "6px 0 4px",
+          }}
+        >
+          FII / DII / PRO / RETAIL
+        </h2>
+
+        <div className="sub">
+          {participantActivityDate
+            ? `${participantActivityDate} - FII DII FNO/Cash Data`
+            : "Latest NSE participant activity"}
+        </div>
+
+        <div
+          style={{
+            marginTop: 18,
+            width: "100%",
+            overflowX: "auto",
+          }}
+        >
+          {participantActivity.length ? (
+            <table
+              style={{
+                width: "100%",
+                borderCollapse:
+                  "collapse",
+                minWidth: 720,
+                fontSize: 12,
+              }}
+            >
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      textAlign: "left",
+                      padding:
+                        "10px 12px",
+                      borderBottom:
+                        "1px solid #26323d",
+                      color: "#9aa7b2",
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    PARTICIPANT
+                  </th>
+
+                  <th
+                    style={{
+                      textAlign: "left",
+                      padding:
+                        "10px 12px",
+                      borderBottom:
+                        "1px solid #26323d",
+                      color: "#9aa7b2",
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    SEGMENT
+                  </th>
+
+                  <th
+                    style={{
+                      textAlign: "right",
+                      padding:
+                        "10px 12px",
+                      borderBottom:
+                        "1px solid #26323d",
+                      color: "#9aa7b2",
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    CHANGE
+                  </th>
+
+                  <th
+                    style={{
+                      textAlign: "left",
+                      padding:
+                        "10px 12px",
+                      borderBottom:
+                        "1px solid #26323d",
+                      color: "#9aa7b2",
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    ACTIVITY
+                  </th>
+
+                  <th
+                    style={{
+                      textAlign: "center",
+                      padding:
+                        "10px 12px",
+                      borderBottom:
+                        "1px solid #26323d",
+                      color: "#9aa7b2",
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    VIEWS
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {participantActivity.map(
+                  (row, index) => {
+                    const participant =
+                      String(
+                        row.participant ??
+                          ""
+                      );
+
+                    const change =
+                      Number(
+                        row.change ?? 0
+                      );
+
+                    const views =
+                      String(
+                        row.views ?? ""
+                      );
+
+                    const participantBg =
+                      participant ===
+                      "FII"
+                        ? "#24183a"
+                        : participant ===
+                            "PRO"
+                          ? "#123331"
+                          : participant ===
+                              "DII"
+                            ? "#3a2818"
+                            : participant ===
+                                "RETAIL"
+                              ? "#381c2d"
+                              : "#101820";
+
+                    const valueColor =
+                      change >= 0
+                        ? "#31d17c"
+                        : "#ff4d4d";
+
+                    const viewColor =
+                      views ===
+                      "Bullish"
+                        ? "#31d17c"
+                        : "#ff4d4d";
+
+                    return (
+                      <tr
+                        key={`${participant}-${row.segment}-${index}`}
+                      >
+                        <td
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderBottom:
+                              "1px solid #202a34",
+                            fontWeight: 700,
+                            color:
+                              "#e8eef3",
+                            background:
+                              participantBg,
+                          }}
+                        >
+                          {participant}
+                        </td>
+
+                        <td
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderBottom:
+                              "1px solid #202a34",
+                            color:
+                              "#dce5eb",
+                          }}
+                        >
+                          {row.segment}
+                        </td>
+
+                        <td
+                          className="mono"
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderBottom:
+                              "1px solid #202a34",
+                            textAlign:
+                              "right",
+                            fontWeight: 700,
+                            color:
+                              valueColor,
+                          }}
+                        >
+                          {change >= 0
+                            ? "+"
+                            : ""}
+                          {change.toLocaleString(
+                            "en-IN"
+                          )}
+                        </td>
+
+                        <td
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderBottom:
+                              "1px solid #202a34",
+                            color:
+                              "#dce5eb",
+                          }}
+                        >
+                          {row.activity}
+                        </td>
+
+                        <td
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderBottom:
+                              "1px solid #202a34",
+                            textAlign:
+                              "center",
+                            fontWeight: 700,
+                            color:
+                              viewColor,
+                          }}
+                        >
+                          {views}
+                        </td>
+                      </tr>
+                    );
+                  }
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <EmptyState
+              text="No participant activity data available."
             />
           )}
         </div>
@@ -3586,9 +4306,6 @@ export default function Analysis({
       className="page-workspace"
       style={{
         width: "100%",
-        maxWidth: 1400,
-        margin:
-          "0 auto",
         paddingBottom: 30,
         minWidth: 0,
       }}
