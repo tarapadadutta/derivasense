@@ -726,12 +726,12 @@ export async function fetchMarketData(): Promise<MarketData> {
   try {
 
     const response =
-      await fetch(
-        `/fiidii_data.json?t=${cacheBust}`,
-        {
-          cache: "no-store",
-        }
-      );
+  await fetch(
+    `/api/fiidii`,
+    {
+      cache: "no-store",
+    }
+  );
 
     if (response.ok) {
 
