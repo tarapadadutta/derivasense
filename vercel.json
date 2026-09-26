@@ -17,6 +17,12 @@
       }
     },
     {
+      "source": "/api/fiidii",
+      "destination": {
+        "service": "frontend"
+      }
+    },
+    {
       "source": "/api/:path*",
       "destination": {
         "service": "backend"
