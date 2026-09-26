@@ -485,32 +485,33 @@ function ThreeDPie({
           }}
         />
 
+        
+        
         {/* call label */}
         <div
           style={{
             position: "absolute",
-            left:
-              callPct >= 50
-                ? 35
-                : 112,
-            top: 75,
+            left: 158,
+            top: 78,
+            transform: "translateX(-50%)",
             color: "#fff",
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: 800,
             textAlign: "center",
-            width: 80,
+            width: 70,
+            lineHeight: 1.15,
             textShadow:
-              "0 2px 4px rgba(0,0,0,.8)",
+              "0 2px 4px rgba(0,0,0,.9)",
             pointerEvents: "none",
+            zIndex: 10,
           }}
         >
           {callLabel}
           <br />
           <span
             style={{
-              fontSize: 16,
-              fontFamily:
-                "Consolas, monospace",
+              fontSize: 15,
+              fontFamily: "Consolas, monospace",
             }}
           >
             {callPct.toFixed(1)}%
@@ -521,34 +522,37 @@ function ThreeDPie({
         <div
           style={{
             position: "absolute",
-            right:
-              putPct >= 50
-                ? 35
-                : 112,
-            top: 75,
+            left: 47,
+            top: 78,
+            transform: "translateX(-50%)",
             color: "#fff",
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: 800,
             textAlign: "center",
-            width: 80,
+            width: 70,
+            lineHeight: 1.15,
             textShadow:
-              "0 2px 4px rgba(0,0,0,.8)",
+              "0 2px 4px rgba(0,0,0,.9)",
             pointerEvents: "none",
+            zIndex: 10,
           }}
         >
           {putLabel}
           <br />
           <span
             style={{
-              fontSize: 16,
-              fontFamily:
-                "Consolas, monospace",
+              fontSize: 15,
+              fontFamily: "Consolas, monospace",
             }}
           >
             {putPct.toFixed(1)}%
           </span>
         </div>
       </div>
+
+
+
+
 
       {/* Legend */}
       <div
