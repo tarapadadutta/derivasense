@@ -1467,19 +1467,44 @@ function OpenInterestPanel({
   const index =
     getIndex(data, symbol);
 
-  const rows = useMemo(
-    () =>
-      filterStrikes(
-        getStrikeRows(
-          data,
-          symbol,
-          "strikeOI"
-        ),
-        index,
-        window
-      ),
-    [data, symbol, index, window]
-  );
+  const rows = useMemo(() => {
+    const source =
+      raw(data)?.optionChain?.[
+        symbol
+      ];
+
+    if (!Array.isArray(source)) {
+      return [];
+    }
+
+    const oiRows: StrikeRow[] =
+      source
+        .filter(
+          (r: any) =>
+            Array.isArray(r) &&
+            r.length >= 13 &&
+            Number.isFinite(
+              Number(r[6])
+            )
+        )
+        .map(
+          (r: any) =>
+            [
+              Number(r[6]),       // STRIKE
+              Number(r[0]) || 0,  // CALL OI
+              Number(r[12]) || 0, // PUT OI
+            ] as StrikeRow
+        )
+        .sort(
+          (a, b) => a[0] - b[0]
+        );
+
+    return filterStrikes(
+      oiRows,
+      index,
+      window
+    );
+  }, [data, symbol, index, window]);
 
   const chartData = useMemo(
     () => ({
@@ -1620,7 +1645,7 @@ function OpenInterestPanel({
 }
 
 /* ============================================================
-   COI STRIKE CHART
+   CHANGE OF OPEN INTEREST CHART
    ============================================================ */
 
 function CoiStrikePanel({
@@ -1636,19 +1661,44 @@ function CoiStrikePanel({
   const index =
     getIndex(data, symbol);
 
-  const rows = useMemo(
-    () =>
-      filterStrikes(
-        getStrikeRows(
-          data,
-          symbol,
-          "strikeCOI"
-        ),
-        index,
-        window
-      ),
-    [data, symbol, index, window]
-  );
+  const rows = useMemo(() => {
+    const source =
+      raw(data)?.optionChain?.[
+        symbol
+      ];
+
+    if (!Array.isArray(source)) {
+      return [];
+    }
+
+    const coiRows: StrikeRow[] =
+      source
+        .filter(
+          (r: any) =>
+            Array.isArray(r) &&
+            r.length >= 13 &&
+            Number.isFinite(
+              Number(r[6])
+            )
+        )
+        .map(
+          (r: any) =>
+            [
+              Number(r[6]),        // STRIKE
+              Number(r[1]) || 0,   // CALL COI
+              Number(r[11]) || 0,  // PUT COI
+            ] as StrikeRow
+        )
+        .sort(
+          (a, b) => a[0] - b[0]
+        );
+
+    return filterStrikes(
+      coiRows,
+      index,
+      window
+    );
+  }, [data, symbol, index, window]);
 
   const chartData = useMemo(
     () => ({
