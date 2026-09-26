@@ -1663,9 +1663,9 @@ function CoiStrikePanel({
             (r) => r[1]
           ),
           backgroundColor:
-            "#ffb020",
+            "#ff4d6d",
           borderColor:
-            "#ffb020",
+            "#ff4d6d",
           borderWidth: 1,
         },
 
@@ -1675,9 +1675,9 @@ function CoiStrikePanel({
             (r) => r[2]
           ),
           backgroundColor:
-            "#ff4d6d",
+            "#22c55e",
           borderColor:
-            "#ff4d6d",
+            "#22c55e",
           borderWidth: 1,
         },
       ],
