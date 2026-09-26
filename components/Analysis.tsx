@@ -44,6 +44,7 @@ type SelectedSymbol = SymbolName | "COMPARE ALL";
 type AnalysisType =
   | "OPTION CHAIN"
   | "OPEN INTEREST"
+  | "CHANGE OF OPEN INTEREST"
   | "PCR"
   | "COI CHANGE"
   | "STRADDLE"
@@ -89,6 +90,7 @@ const SYMBOLS: SymbolName[] = [
 const ANALYSIS_TYPES: AnalysisType[] = [
   "OPTION CHAIN",
   "OPEN INTEREST",
+  "CHANGE OF OPEN INTEREST",
   "PCR",
   "COI CHANGE",
   "STRADDLE",
@@ -1690,7 +1692,7 @@ function CoiStrikePanel({
       }}
     >
       <div className="card-label">
-        CHANGE OF OI
+        CHANGE OF OPEN INTEREST
       </div>
 
       <h2
@@ -1699,7 +1701,7 @@ function CoiStrikePanel({
             "6px 0 4px",
         }}
       >
-        {symbol} · Change of OI
+        {symbol} · Change of Open Interest
       </h2>
 
       <div className="sub">
@@ -4220,16 +4222,24 @@ function CompareAll({
       {SYMBOLS.map(
         (symbol) => (
           <div key={symbol}>
-            {type ===
-            "OPEN INTEREST" ? (
-              <OpenInterestPanel
-                data={data}
-                symbol={
-                  symbol
-                }
-              />
-            ) : type ===
-              "PCR" ? (
+                  {type ===
+      "OPEN INTEREST" ? (
+        <OpenInterestPanel
+          data={data}
+          symbol={
+            symbol
+          }
+        />
+      ) : type ===
+        "CHANGE OF OPEN INTEREST" ? (
+        <CoiStrikePanel
+          data={data}
+          symbol={
+            symbol
+          }
+        />
+      ) : type ===
+        "PCR" ? (
               <PcrPanel
                 data={data}
                 symbol={
@@ -4532,6 +4542,14 @@ export default function Analysis({
       ) : type ===
         "OPEN INTEREST" ? (
         <OpenInterestPanel
+          data={data}
+          symbol={
+            symbol as SymbolName
+          }
+        />
+      ) : type ===
+        "CHANGE OF OPEN INTEREST" ? (
+        <CoiStrikePanel
           data={data}
           symbol={
             symbol as SymbolName
