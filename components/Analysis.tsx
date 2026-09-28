@@ -571,7 +571,8 @@ function filterStrikes(
    ============================================================ */
 
 function lineOptions(
-  yTitle: string
+  yTitle: string,
+  showLegend = true
 ) {
   return {
     responsive: true,
@@ -592,7 +593,7 @@ function lineOptions(
 
     plugins: {
       legend: {
-        display: true,
+        display: showLegend,
         position: "top" as const,
 
         labels: {
@@ -656,7 +657,8 @@ function lineOptions(
    ============================================================ */
 
 function barOptions(
-  yTitle: string
+  yTitle: string,
+  showLegend = true
 ) {
   return {
     responsive: true,
@@ -671,7 +673,7 @@ function barOptions(
 
     plugins: {
       legend: {
-        display: true,
+        display: showLegend,
         position: "top" as const,
 
         labels: {
@@ -1837,6 +1839,107 @@ function CoiStrikePanel({
     </AnalysisCard>
   );
 }
+function PlotToggle({
+  on,
+  onChange,
+  label,
+  color,
+}: {
+  on: boolean;
+  onChange: () => void;
+  label: string;
+  color: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      style={{
+        border: "1px solid var(--line)",
+        background: on
+          ? `${color}18`
+          : "rgba(255,255,255,0.04)",
+        color: on ? color : "#7f8d98",
+        borderRadius: 999,
+        padding: "4px 10px",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        letterSpacing: 0.2,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          background: on ? color : "#687681",
+          display: "inline-block",
+          boxShadow: on
+            ? `0 0 7px ${color}66`
+            : "none",
+        }}
+      />
+      {on ? "ON" : "OFF"}
+    </button>
+  );
+}
+
+function PlotLegend({
+  items,
+}: {
+  items: {
+    label: string;
+    color: string;
+    on: boolean;
+    onChange: () => void;
+  }[];
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 14,
+        marginBottom: 8,
+        flexWrap: "wrap",
+      }}
+    >
+      {items.map((item) => (
+        <div
+          key={item.label}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <PlotToggle
+            on={item.on}
+            onChange={item.onChange}
+            label={item.label}
+            color={item.color}
+          />
+
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#dce5eb",
+            }}
+          >
+            {item.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /* ============================================================
    PCR PANEL
@@ -1849,6 +1952,12 @@ function PcrPanel({
   data: MarketData;
   symbol: SymbolName;
 }) {
+  const [pcrOiOn, setPcrOiOn] =
+    useState(true);
+
+  const [pcrCoiOn, setPcrCoiOn] =
+    useState(true);
+
   const index =
     getIndex(data, symbol);
 
@@ -1871,6 +1980,7 @@ function PcrPanel({
       datasets: [
         {
           label: "PCR OI",
+          hidden: !pcrOiOn,
           data: rows.map(
             (r) => Number(r[1])
           ),
@@ -1887,6 +1997,7 @@ function PcrPanel({
 
         {
           label: "PCR COI",
+          hidden: !pcrCoiOn,
           data: rows.map(
             (r) =>
               Number(
@@ -1906,7 +2017,12 @@ function PcrPanel({
         },
       ],
     }),
-    [rows, symbol]
+    [
+      rows,
+      symbol,
+      pcrOiOn,
+      pcrCoiOn,
+    ]
   );
 
   return (
@@ -1944,6 +2060,29 @@ function PcrPanel({
             PCR OI and PCR COI
             against time
           </div>
+
+          <PlotLegend
+            items={[
+              {
+                label: "PCR OI",
+                color: INDEX_COLORS[symbol],
+                on: pcrOiOn,
+                onChange: () =>
+                  setPcrOiOn(
+                    (value) => !value
+                  ),
+              },
+              {
+                label: "PCR COI",
+                color: "#ffffff",
+                on: pcrCoiOn,
+                onChange: () =>
+                  setPcrCoiOn(
+                    (value) => !value
+                  ),
+              },
+            ]}
+          />
         </div>
 
         <div
@@ -1992,7 +2131,8 @@ function PcrPanel({
             key={`pcr-${symbol}`}
             data={chartData}
             options={lineOptions(
-              "PCR"
+              "PCR",
+              false
             )}
           />
         ) : (
@@ -2016,6 +2156,14 @@ function CoiTrendPanel({
   data: MarketData;
   symbol: SymbolName;
 }) {
+  const [
+    coiDifferenceOn,
+    setCoiDifferenceOn,
+  ] = useState(true);
+
+  const [coiTrendOn, setCoiTrendOn] =
+    useState(true);
+
   const rows = useMemo(
     () =>
       getTrendRows(
@@ -2040,6 +2188,7 @@ function CoiTrendPanel({
         {
           label:
             "PUT COI SUM - CALL COI SUM",
+          hidden: !coiDifferenceOn,
 
           data: rows.map(
             (r) => Number(r[1])
@@ -2063,7 +2212,11 @@ function CoiTrendPanel({
         },
       ],
     }),
-    [rows, symbol]
+    [
+      rows,
+      symbol,
+      coiDifferenceOn,
+    ]
   );
 
   /* ==========================================================
@@ -2148,6 +2301,7 @@ function CoiTrendPanel({
 
           label:
             "PUT COI SUM - CALL COI SUM",
+          hidden: !coiDifferenceOn,
 
           data: rows.map(
             (r) => Number(r[1])
@@ -2181,6 +2335,7 @@ function CoiTrendPanel({
 
           label:
             "LINEAR TREND",
+          hidden: !coiTrendOn,
 
           data: trendline,
 
@@ -2204,7 +2359,12 @@ function CoiTrendPanel({
         },
       ],
     }),
-    [rows, trendline]
+    [
+      rows,
+      trendline,
+      coiDifferenceOn,
+      coiTrendOn,
+    ]
   );
 
   /* ==========================================================
@@ -2226,7 +2386,7 @@ function CoiTrendPanel({
 
     plugins: {
       legend: {
-        display: true,
+        display: false,
 
         position: "top",
 
@@ -2377,6 +2537,31 @@ function CoiTrendPanel({
           PUT COI SUM − CALL COI
           SUM against time
         </div>
+
+        <PlotLegend
+          items={[
+            {
+              label:
+                "PUT COI SUM - CALL COI SUM",
+              color:
+                INDEX_COLORS[symbol],
+              on: coiDifferenceOn,
+              onChange: () =>
+                setCoiDifferenceOn(
+                  (value) => !value
+                ),
+            },
+            {
+              label: "LINEAR TREND",
+              color: "#ffff00",
+              on: coiTrendOn,
+              onChange: () =>
+                setCoiTrendOn(
+                  (value) => !value
+                ),
+            },
+          ]}
+        />
 
         <div
           style={{
@@ -2549,6 +2734,9 @@ function StraddlePanel({
   data: MarketData;
   symbol: SymbolName;
 }) {
+  const [straddleOn, setStraddleOn] =
+    useState(true);
+
   const rows = useMemo(
     () =>
       getTrendRows(
@@ -2569,6 +2757,7 @@ function StraddlePanel({
         {
           label:
             `${symbol} ATM STRADDLE`,
+          hidden: !straddleOn,
           data: rows.map(
             (r) => Number(r[1])
           ),
@@ -2584,7 +2773,11 @@ function StraddlePanel({
         },
       ],
     }),
-    [rows, symbol]
+    [
+      rows,
+      symbol,
+      straddleOn,
+    ]
   );
 
   return (
@@ -2611,6 +2804,20 @@ function StraddlePanel({
         against time
       </div>
 
+      <PlotLegend
+        items={[
+          {
+            label: "ATM STRADDLE",
+            color: INDEX_COLORS[symbol],
+            on: straddleOn,
+            onChange: () =>
+              setStraddleOn(
+                (value) => !value
+              ),
+          },
+        ]}
+      />
+
       <div
         style={{
           position:
@@ -2625,7 +2832,8 @@ function StraddlePanel({
             key={`straddle-${symbol}`}
             data={chartData}
             options={lineOptions(
-              "PREMIUM"
+              "PREMIUM",
+              false
             )}
           />
         ) : (
@@ -2647,6 +2855,9 @@ function VixPanel({
 }: {
   data: MarketData;
 }) {
+  const [vixOn, setVixOn] =
+    useState(true);
+
   const rows =
     getVixRows(data);
 
@@ -2674,6 +2885,7 @@ function VixPanel({
       datasets: [
         {
           label: "INDIA VIX",
+          hidden: !vixOn,
           data: rows.map(
             (r) => Number(r[1])
           ),
@@ -2689,7 +2901,7 @@ function VixPanel({
         },
       ],
     }),
-    [rows]
+    [rows, vixOn]
   );
 
   let note =
@@ -2788,6 +3000,20 @@ function VixPanel({
         </div>
       </div>
 
+      <PlotLegend
+        items={[
+          {
+            label: "INDIA VIX",
+            color: "#ff4d6d",
+            on: vixOn,
+            onChange: () =>
+              setVixOn(
+                (value) => !value
+              ),
+          },
+        ]}
+      />
+
       <div
         style={{
           position:
@@ -2801,7 +3027,8 @@ function VixPanel({
           <Line
             data={chartData}
             options={lineOptions(
-              "INDIA VIX"
+              "INDIA VIX",
+              false
             )}
           />
         ) : (
@@ -2825,6 +3052,15 @@ function PricePanel({
   data: MarketData;
   symbol: SymbolName;
 }) {
+  const [spotOn, setSpotOn] =
+    useState(true);
+
+  const [futureOn, setFutureOn] =
+    useState(true);
+
+  const [vwapOn, setVwapOn] =
+    useState(true);
+
   const index =
     getIndex(data, symbol);
 
@@ -2847,6 +3083,7 @@ function PricePanel({
       datasets: [
         {
           label: "SPOT",
+          hidden: !spotOn,
           data: rows.map(
             (r) =>
               Number.isFinite(
@@ -2868,6 +3105,7 @@ function PricePanel({
 
         {
           label: "FUTURE",
+          hidden: !futureOn,
           data: rows.map(
             (r) =>
               Number.isFinite(
@@ -2889,6 +3127,7 @@ function PricePanel({
 
         {
           label: "VWAP",
+          hidden: !vwapOn,
           data: rows.map(
             (r) =>
               Number.isFinite(
@@ -2909,7 +3148,12 @@ function PricePanel({
         },
       ],
     }),
-    [rows]
+    [
+      rows,
+      spotOn,
+      futureOn,
+      vwapOn,
+    ]
   );
 
   return (
@@ -2965,6 +3209,38 @@ function PricePanel({
         </div>
       </div>
 
+      <PlotLegend
+        items={[
+          {
+            label: "SPOT",
+            color: "#e8eef3",
+            on: spotOn,
+            onChange: () =>
+              setSpotOn(
+                (value) => !value
+              ),
+          },
+          {
+            label: "FUTURE",
+            color: "#31d17c",
+            on: futureOn,
+            onChange: () =>
+              setFutureOn(
+                (value) => !value
+              ),
+          },
+          {
+            label: "VWAP",
+            color: "#e5aa45",
+            on: vwapOn,
+            onChange: () =>
+              setVwapOn(
+                (value) => !value
+              ),
+          },
+        ]}
+      />
+
       <div
         style={{
           position:
@@ -2979,7 +3255,8 @@ function PricePanel({
             key={`price-${symbol}`}
             data={chartData}
             options={lineOptions(
-              "PRICE"
+              "PRICE",
+              false
             )}
           />
         ) : (
@@ -3291,6 +3568,18 @@ function FiiDiiPanel({
 }: {
   data: MarketData;
 }) {
+  const [netFiiOn, setNetFiiOn] =
+    useState(true);
+
+  const [netDiiOn, setNetDiiOn] =
+    useState(true);
+
+  const [longOn, setLongOn] =
+    useState(true);
+
+  const [shortOn, setShortOn] =
+    useState(true);
+
   const fii =
     Number(
       data.fiidii?.netFII ??
@@ -3364,6 +3653,7 @@ function FiiDiiPanel({
     datasets: [
       {
         label: "NET FII",
+        hidden: !netFiiOn,
         data: flowRows.map(
           (r: any) => r[1]
         ),
@@ -3373,6 +3663,7 @@ function FiiDiiPanel({
 
       {
         label: "NET DII",
+        hidden: !netDiiOn,
         data: flowRows.map(
           (r: any) => r[2]
         ),
@@ -3390,6 +3681,7 @@ function FiiDiiPanel({
     datasets: [
       {
         label: "LONG %",
+        hidden: !longOn,
         data: fiiRows.map(
           (r: any) => r[1]
         ),
@@ -3404,6 +3696,7 @@ function FiiDiiPanel({
 
       {
         label: "SHORT %",
+        hidden: !shortOn,
         data: fiiRows.map(
           (r: any) => r[2]
         ),
@@ -3523,6 +3816,29 @@ function FiiDiiPanel({
           </div>
         </div>
 
+        <PlotLegend
+          items={[
+            {
+              label: "NET FII",
+              color: "#ff4d4d",
+              on: netFiiOn,
+              onChange: () =>
+                setNetFiiOn(
+                  (value) => !value
+                ),
+            },
+            {
+              label: "NET DII",
+              color: "#31d17c",
+              on: netDiiOn,
+              onChange: () =>
+                setNetDiiOn(
+                  (value) => !value
+                ),
+            },
+          ]}
+        />
+
         <div
           style={{
             position:
@@ -3536,7 +3852,8 @@ function FiiDiiPanel({
             <Bar
               data={flowChart}
               options={barOptions(
-                "₹ Cr"
+                "₹ Cr",
+                false
               )}
             />
           ) : (
@@ -3570,6 +3887,29 @@ function FiiDiiPanel({
           percentage trend
         </div>
 
+        <PlotLegend
+          items={[
+            {
+              label: "LONG %",
+              color: "#31d17c",
+              on: longOn,
+              onChange: () =>
+                setLongOn(
+                  (value) => !value
+                ),
+            },
+            {
+              label: "SHORT %",
+              color: "#ff4d4d",
+              on: shortOn,
+              onChange: () =>
+                setShortOn(
+                  (value) => !value
+                ),
+            },
+          ]}
+        />
+
         <div
           style={{
             position:
@@ -3583,7 +3923,8 @@ function FiiDiiPanel({
             <Line
               data={fiiChart}
               options={lineOptions(
-                "PERCENT"
+                "PERCENT",
+                false
               )}
             />
           ) : (
