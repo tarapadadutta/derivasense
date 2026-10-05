@@ -424,6 +424,8 @@ function VixPanel({
       : vix < 20
       ? "Moderate volatility"
       : "Elevated volatility";
+  const [vixPlotOn, setVixPlotOn] = useState(true);
+
 
   const chartData = {
     labels: rows.map(
@@ -452,6 +454,7 @@ function VixPanel({
         pointHoverRadius: 5,
 
         tension: 0.25,
+        hidden: !vixPlotOn,
       },
     ],
   };
@@ -470,7 +473,7 @@ function VixPanel({
 
     plugins: {
       legend: {
-        display: true,
+        display: false,
 
         position: "top",
 
@@ -586,6 +589,65 @@ function VixPanel({
           %)
         </div>
       </div>
+      <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 8,
+    marginTop: 14,
+    marginBottom: 8,
+    flexWrap: "wrap",
+  }}
+>
+  <button
+    type="button"
+    onClick={() =>
+      setVixPlotOn((value) => !value)
+    }
+    style={{
+      border: "1px solid var(--line)",
+      background: vixPlotOn
+        ? "rgba(49,209,124,0.12)"
+        : "rgba(255,255,255,0.04)",
+      color: vixPlotOn
+        ? "#31d17c"
+        : "#8d9ba7",
+      borderRadius: 999,
+      padding: "4px 10px",
+      fontSize: 11,
+      fontWeight: 700,
+      cursor: "pointer",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      letterSpacing: 0.2,
+    }}
+  >
+    <span
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: vixPlotOn
+          ? "#31d17c"
+          : "#687681",
+        display: "inline-block",
+      }}
+    />
+    {vixPlotOn ? "ON" : "OFF"}
+  </button>
+
+  <span
+    style={{
+      fontSize: 12,
+      fontWeight: 700,
+      color: "#dce5eb",
+    }}
+  >
+    INDIA VIX
+  </span>
+</div>
 
       <div
         style={{
