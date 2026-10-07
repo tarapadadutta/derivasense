@@ -1037,21 +1037,75 @@ export default function Charts({
      OI / COI STRIKE DATA
      ======================================================= */
 
-  const oiRows = useMemo(
-    () =>
-      cleanStrikeRows(
-        d?.strikeOI?.[oiIndex]
-      ),
-    [data, oiIndex]
-  );
+ const oiRows = useMemo(
+  () => {
+    const source =
+      raw(data)?.optionChain?.[
+        oiIndex
+      ];
+
+    if (!Array.isArray(source)) {
+      return [];
+    }
+
+    return source
+      .filter(
+        (r: any) =>
+          Array.isArray(r) &&
+          r.length >= 13 &&
+          Number.isFinite(
+            Number(r[6])
+          )
+      )
+      .map(
+        (r: any) =>
+          [
+            Number(r[6]),       // STRIKE
+            Number(r[0]) || 0,  // CALL OI
+            Number(r[12]) || 0, // PUT OI
+          ] as Row
+      )
+      .sort(
+        (a, b) => a[0] - b[0]
+      );
+  },
+  [data, oiIndex]
+);
 
   const coiRows = useMemo(
-    () =>
-      cleanStrikeRows(
-        d?.strikeCOI?.[coiIndex]
-      ),
-    [data, coiIndex]
-  );
+  () => {
+    const source =
+      raw(data)?.optionChain?.[
+        coiIndex
+      ];
+
+    if (!Array.isArray(source)) {
+      return [];
+    }
+
+    return source
+      .filter(
+        (r: any) =>
+          Array.isArray(r) &&
+          r.length >= 13 &&
+          Number.isFinite(
+            Number(r[6])
+          )
+      )
+      .map(
+        (r: any) =>
+          [
+            Number(r[6]),       // STRIKE
+            Number(r[1]) || 0,  // CALL COI
+            Number(r[11]) || 0, // PUT COI
+          ] as Row
+      )
+      .sort(
+        (a, b) => a[0] - b[0]
+      );
+  },
+  [data, coiIndex]
+);
 
   const oiData = indexData(
     data,
@@ -1076,6 +1130,7 @@ export default function Charts({
       oiWindow,
     ]
   );
+  console.log("[OI WINDOW]", oiWindow, "rows:", oiFiltered.length);
 
   const coiFiltered = useMemo(
     () =>
@@ -1090,6 +1145,7 @@ export default function Charts({
       coiWindow,
     ]
   );
+  console.log("[COI WINDOW]", coiWindow, "rows:", coiFiltered.length);
 
   /* =======================================================
      PCR CHART DATA
