@@ -188,10 +188,13 @@ function normalizeIndex(
   return {
     symbol:
       String(index.symbol ?? "")
-        .trim(),
+      .trim(),
+
+    expiry: index.expiry,
 
     spot,
 
+  
     future:
       index.future === null ||
       index.future === undefined

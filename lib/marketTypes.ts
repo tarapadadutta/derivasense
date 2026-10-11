@@ -1,5 +1,6 @@
 export type IndexData = {
   symbol: string;
+  expiry?: string;
   spot: number;
   future: number | null;
   vwap: number | null;
