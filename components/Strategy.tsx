@@ -115,6 +115,60 @@ function normalizeIndex(symbol: unknown): string {
     .replace("NIFTY50", "NIFTY");
 }
 
+
+function parseStrategyDate(value: unknown): number | null {
+  const text = String(value ?? "").trim();
+
+  // Supports 13-Oct-2026 and 09 Oct 2026, 15:31:21 IST
+  const match = text.match(
+    /^(\d{1,2})[-\s]([A-Za-z]{3})[-\s](\d{4})/
+  );
+
+  if (!match) return null;
+
+  const day = Number(match[1]);
+
+  const monthNames = [
+    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+  ];
+
+  const month = monthNames.indexOf(match[2].toUpperCase());
+  const year = Number(match[3]);
+
+  if (month < 0 || day < 1 || day > 31) {
+    return null;
+  }
+
+  const timestamp = Date.UTC(year, month, day);
+  const date = new Date(timestamp);
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return timestamp;
+}
+function getStrategyDte(
+  expiry: unknown,
+  asOf: unknown
+): number | null {
+  const expiryDate = parseStrategyDate(expiry);
+  const marketDate = parseStrategyDate(asOf);
+
+  if (expiryDate === null || marketDate === null) {
+    return null;
+  }
+
+  return Math.round(
+    (expiryDate - marketDate) / 86400000
+  );
+}
+
 function getIndexData(
   data: MarketData,
   index: IndexName
@@ -1746,6 +1800,30 @@ export default function Strategy({
     [data, selectedIndex]
   );
 
+  const expiry = String(
+  (data as any)?.indices?.[selectedIndex]?.expiry ??
+  indexData?.expiry ??
+  ""
+).trim();
+
+  const dte = getStrategyDte(
+    expiry,
+    data.asOf
+  );
+console.log(
+  "STRATEGY EXPIRY DETAILS",
+  JSON.stringify(
+    {
+      selectedIndex,
+      indexData,
+      allIndices: (data as any)?.indices,
+      expiry,
+      dte,
+    },
+    null,
+    2
+  )
+);
   const rows = useMemo(
     () =>
       getOptionRows(
@@ -1886,6 +1964,85 @@ export default function Strategy({
             </button>
           );
         })}
+      </div>
+	
+      {/* EXPIRY AND DAYS TO EXPIRY */}
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 12,
+          alignItems: "center",
+          background: PANEL,
+          border: `1px solid ${LINE}`,
+          borderRadius: 9,
+          padding: "12px 16px",
+          marginBottom: 16,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: MUTED,
+              fontSize: 10,
+              letterSpacing: ".12em",
+              marginBottom: 5,
+            }}
+          >
+            SELECTED CONTRACT EXPIRY
+          </div>
+
+          <div
+            style={{
+              color: expiry ? "#e8eef5" : "#f59e0b",
+              fontSize: 15,
+              fontWeight: 800,
+            }}
+          >
+            {expiry || "Expiry unavailable"}
+          </div>
+        </div>
+
+        <div
+          style={{
+            width: 1,
+            height: 34,
+            background: LINE,
+          }}
+        />
+
+        <div>
+          <div
+            style={{
+              color: MUTED,
+              fontSize: 10,
+              letterSpacing: ".12em",
+              marginBottom: 5,
+            }}
+          >
+            DAYS TO EXPIRY (DTE)
+          </div>
+
+          <div
+            style={{
+              color:
+                dte === null || dte <= 2
+                  ? "#f59e0b"
+                  : "#34d399",
+              fontSize: 15,
+              fontWeight: 800,
+            }}
+          >
+            {dte === null
+              ? "Unable to calculate"
+              : dte < 0
+                ? `Expired ${Math.abs(dte)} day(s) ago`
+                : dte === 0
+                  ? "Expiry today"
+                  : `${dte} calendar day(s)`}
+          </div>
+        </div>
       </div>
 
       {/* =====================================================
