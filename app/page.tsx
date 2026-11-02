@@ -1359,10 +1359,116 @@ function MostActivePanel({
     </div>
   );
 }
+/* ============================================================
+   STOCK SCREENER / MAVO WATCHLIST
+   ============================================================ */
 
+function ScreenerPanel({
+  data,
+}: {
+  data: MarketData;
+}) {
+  const screener = data.screener;
+  const stocks = screener?.highVolumeWatchlist ?? [];
+
+  return (
+    <div className="card">
+      <SectionHeader
+        title="STOCK SCREENER | MAVO WATCHLIST"
+        subtitle="High-volume stocks and market participation"
+      />
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+          gap: 10,
+          marginBottom: 16,
+        }}
+      >
+        <div className="card" style={{ background: "var(--panel2)" }}>
+          <div className="label">NIFTY CHANGE</div>
+          <div className="smallmetric mono">
+            {screener?.niftyChange ?? "—"}
+          </div>
+        </div>
+
+        <div className="card" style={{ background: "var(--panel2)" }}>
+          <div className="label">STRONGEST SECTOR</div>
+          <div className="smallmetric">
+            {screener?.strongestSector ?? "—"}
+          </div>
+          <div className="sub">
+            {screener?.sectorChange ?? "—"}
+          </div>
+        </div>
+
+        <div className="card" style={{ background: "var(--panel2)" }}>
+          <div className="label">MARKET BREADTH</div>
+          <div className="smallmetric">
+            {screener?.marketBreadth ?? "—"}
+          </div>
+        </div>
+      </div>
+
+      <div className="label" style={{ marginBottom: 10 }}>
+        MOST ACTIVE VOLUME WATCHLIST
+      </div>
+
+      {stocks.length > 0 ? (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr className="label">
+                <th style={{ textAlign: "left", padding: 10 }}>STOCK</th>
+                <th style={{ textAlign: "right", padding: 10 }}>LTP</th>
+                <th style={{ textAlign: "right", padding: 10 }}>CHANGE %</th>
+                <th style={{ textAlign: "right", padding: 10 }}>VOLUME</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stocks.map((stock) => (
+                <tr key={stock.symbol}>
+                  <td style={{ padding: 10, fontWeight: 700 }}>
+                    {stock.symbol}
+                  </td>
+                  <td className="mono" style={{ textAlign: "right", padding: 10 }}>
+                    {fmt(stock.price)}
+                  </td>
+                  <td
+                    className={`mono ${stock.change >= 0 ? "up" : "down"}`}
+                    style={{ textAlign: "right", padding: 10 }}
+                  >
+                    {sign(stock.change)}{fmt(stock.change)}%
+                  </td>
+                  <td className="mono" style={{ textAlign: "right", padding: 10 }}>
+                    {fmtInt(stock.volume)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="sub">No volume watchlist data available.</div>
+      )}
+
+      {(!screener?.stocks || screener.stocks.length === 0) && (
+        <div className="sub" style={{ marginTop: 12 }}>
+          Sector constituent coverage is currently unavailable.
+        </div>
+      )}
+
+      <div className="sub" style={{ marginTop: 12 }}>
+        Screener updated: {screener?.asOf ?? "—"}
+      </div>
+    </div>
+  );
+}
 /* ============================================================
    DASHBOARD
    ============================================================ */
+
 
 function DashboardHome({
   data,
@@ -1491,6 +1597,15 @@ function DashboardHome({
         <BreadthPanel
           data={data}
         />
+      </div>
+            {/* STOCK SCREENER */}
+
+      <div
+        style={{
+          marginTop: 12,
+        }}
+      >
+        <ScreenerPanel data={data} />
       </div>
 
       {/* MOST ACTIVE */}

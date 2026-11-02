@@ -159,7 +159,32 @@ export type TimeValueRow = [
   string,
   number
 ];
+/* =========================================================
+   STOCK SCREENER
+   ========================================================= */
 
+export type ScreenerStock = {
+  symbol: string;
+  price: number;
+  change: number;
+  volume: number;
+};
+
+export type ScreenerData = {
+  asOf?: string;
+  marketBreadth?: string;
+  niftyChange?: string;
+  bullishSelection?: string | null;
+  reason?: string | null;
+  strongestSector?: string;
+  sectorChange?: string;
+  matchedConstituents?: string;
+  stocks?: ScreenerStock[];
+  coverageWarning?: string | null;
+  highVolumeWatchlist?: ScreenerStock[];
+  volumeThreshold?: number | null;
+  note?: string | null;
+};
 /* =========================================================
    BIG PLAYER DATA
    ========================================================= */
@@ -188,6 +213,7 @@ export type MostActiveContract = [
   number
 ];
 
+
 /* =========================================================
    MARKET DATA
    ========================================================= */
@@ -195,6 +221,7 @@ export type MostActiveContract = [
 export type MarketData = {
   asOf: string;
   marketOpen: boolean;
+  screener?: ScreenerData;
 
   /* =======================================================
      INDICES
