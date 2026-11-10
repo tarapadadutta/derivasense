@@ -21,7 +21,8 @@ from schemas import (
     UserLogin,
     UserResponse,
 )
-
+from zerodha_routes import router as zerodha_router
+from oi_spurts_routes import router as oi_spurts_router
 
 # ============================================================
 # DATABASE
@@ -65,6 +66,12 @@ app.add_middleware(
         "*"
     ],
 )
+# ============================================================
+# ZERODHA ROUTER
+# ============================================================
+
+app.include_router(zerodha_router)
+app.include_router(oi_spurts_router)
 
 
 # ============================================================
