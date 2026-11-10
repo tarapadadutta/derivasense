@@ -7,6 +7,7 @@ export type Page =
   | "strategy"
   | "watchlist"
   | "market"
+  | "trade"
   | "settings"
   | "admin-users";
 const workspaceItems: Array<[Page, string, string]> = [
@@ -92,7 +93,26 @@ export default function Sidebar({
       <div className="sidebar-section-title system-title">
         SYSTEM
       </div>
+      {isAdmin && (
+  <button
+    className={`side-button ${
+      page === "trade" ? "active" : ""
+    }`}
+    onClick={() => setPage("trade")}
+  >
+    <span className="side-icon">
+      ⇄
+    </span>
 
+    <span className="side-label">
+      TRADE
+    </span>
+
+    {page === "trade" && (
+      <span className="side-active-indicator" />
+    )}
+  </button>
+)}
       {isAdmin && (
         <>
           <div className="sidebar-section-title system-title">
