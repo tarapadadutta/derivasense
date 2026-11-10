@@ -9,3 +9,4 @@ email-validator
 argon2-cffi
 kiteconnect
 requests
+psycopg[binary]
