@@ -24,6 +24,9 @@ import AdminUsers from "../components/AdminUsers";
 import Charts from "../components/Charts";
 import Analysis from "../components/Analysis";
 import Strategy from "../components/Strategy";
+import Trade from "../components/Trade";
+import OISpurtsPanel from "../components/OISpurtsPanel";
+import MAVOWatchlist from "../components/MAVOWatchlist";
 
 ChartJS.register(
   CategoryScale,
@@ -1416,39 +1419,7 @@ function ScreenerPanel({
       </div>
 
       {stocks.length > 0 ? (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr className="label">
-                <th style={{ textAlign: "left", padding: 10 }}>STOCK</th>
-                <th style={{ textAlign: "right", padding: 10 }}>LTP</th>
-                <th style={{ textAlign: "right", padding: 10 }}>CHANGE %</th>
-                <th style={{ textAlign: "right", padding: 10 }}>VOLUME</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stocks.map((stock) => (
-                <tr key={stock.symbol}>
-                  <td style={{ padding: 10, fontWeight: 700 }}>
-                    {stock.symbol}
-                  </td>
-                  <td className="mono" style={{ textAlign: "right", padding: 10 }}>
-                    {fmt(stock.price)}
-                  </td>
-                  <td
-                    className={`mono ${stock.change >= 0 ? "up" : "down"}`}
-                    style={{ textAlign: "right", padding: 10 }}
-                  >
-                    {sign(stock.change)}{fmt(stock.change)}%
-                  </td>
-                  <td className="mono" style={{ textAlign: "right", padding: 10 }}>
-                    {fmtInt(stock.volume)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MAVOWatchlist stocks={stocks} />
       ) : (
         <div className="sub">No volume watchlist data available.</div>
       )}
@@ -1620,6 +1591,7 @@ function DashboardHome({
           data={data}
         />
       </div>
+
     </section>
   );
 }
@@ -1883,6 +1855,7 @@ function MarketPage({
           data={data}
         />
       </div>
+      <OISpurtsPanel />
     </section>
   );
 }
@@ -2577,6 +2550,12 @@ const handleRegister = async () => {
           data={data}
         />
       )}
+	{/* ZERODHA TRADE TERMINAL */}
+
+	{page === "trade" &&
+          currentUser?.role?.toUpperCase() === "ADMIN" && (
+             <Trade />
+	)}
 	{page === "admin-users" && currentUser?.role === "ADMIN" && (
   	<AdminUsers />
 	)}
