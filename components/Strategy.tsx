@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { MarketData } from "../lib/marketTypes";
+import StrikeStrategyBuilder from "./StrikeStrategyBuilder";
 
 /* =========================================================
    PRO OPTIONS TERMINAL
@@ -953,6 +954,58 @@ function calculateStrategy(
 
   const atm = num(indexData?.atm);
 
+  // Five-strike ATM IV window: nearest ATM strike plus two strikes
+  // on either side in the sorted option chain.
+  const atmIvCenterIndex =
+    rows.length > 0 && atm > 0
+      ? rows.reduce(
+          (bestIndex, row, index) =>
+            Math.abs(row[6] - atm) <
+            Math.abs(rows[bestIndex][6] - atm)
+              ? index
+              : bestIndex,
+          0
+        )
+      : -1;
+
+  const atmIvRows =
+    atmIvCenterIndex >= 0
+      ? rows.slice(
+          Math.max(0, atmIvCenterIndex - 2),
+          Math.min(rows.length, atmIvCenterIndex + 3)
+        )
+      : [];
+
+  const atmIvCenterStrike =
+    atmIvCenterIndex >= 0
+      ? rows[atmIvCenterIndex][6]
+      : 0;
+
+  const atmCallIVValues = atmIvRows
+    .map((row) => row[3])
+    .filter((iv) => Number.isFinite(iv) && iv > 0 && iv <= 100);
+
+  const atmPutIVValues = atmIvRows
+    .map((row) => row[9])
+    .filter((iv) => Number.isFinite(iv) && iv > 0 && iv <= 100);
+
+  const atmCallIV =
+    atmCallIVValues.length > 0
+      ? atmCallIVValues.reduce((sum, iv) => sum + iv, 0) /
+        atmCallIVValues.length
+      : 0;
+
+  const atmPutIV =
+    atmPutIVValues.length > 0
+      ? atmPutIVValues.reduce((sum, iv) => sum + iv, 0) /
+        atmPutIVValues.length
+      : 0;
+
+  const combinedATMIV =
+    atmCallIV > 0 && atmPutIV > 0
+      ? (atmCallIV + atmPutIV) / 2
+      : Math.max(atmCallIV, atmPutIV);
+
   /* -------------------------------------------------------
      SUPPORT / RESISTANCE
 
@@ -1080,12 +1133,15 @@ function calculateStrategy(
     | "ELEVATED" =
     "NORMAL";
 
-  if (avgIV > 0) {
-    if (avgIV < 12) {
+  const effectiveIV =
+    combinedATMIV > 0 ? combinedATMIV : avgIV;
+
+  if (effectiveIV > 0) {
+    if (effectiveIV < 12) {
       ivRegime = "LOW";
-    } else if (avgIV < 18) {
+    } else if (effectiveIV < 18) {
       ivRegime = "NORMAL";
-    } else if (avgIV < 25) {
+    } else if (effectiveIV < 25) {
       ivRegime = "HIGH";
     } else {
       ivRegime = "ELEVATED";
@@ -1654,6 +1710,11 @@ function calculateStrategy(
     avgCallIV,
     avgPutIV,
     avgIV,
+    atmIvRows,
+    atmIvCenterStrike,
+    atmCallIV,
+    atmPutIV,
+    combinedATMIV,
     ivRegime,
 
     futureVWAP,
@@ -2279,7 +2340,17 @@ console.log(
           </div>
         </div>
       </div>
-
+	      <StrikeStrategyBuilder
+        index={selectedIndex}
+        expiry={expiry}
+        dte={dte}
+        spot={engine.spot}
+        atm={engine.atm}
+        rows={rows}
+        strategy={engine.strategy}
+        rawBias={engine.rawBias}
+        confidence={engine.confidence}
+      />
       {/* =====================================================
           BIG PLAYER / RETAILER
           ===================================================== */}
@@ -2779,6 +2850,121 @@ console.log(
               : RED
           }
         />
+      </div>
+
+      {/* =====================================================
+          FIVE-STRIKE ATM IMPLIED VOLATILITY
+          ===================================================== */}
+
+      <div
+        style={{
+          background: PANEL,
+          border: `1px solid ${LINE}`,
+          borderRadius: 11,
+          padding: 16,
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            color: MUTED,
+            fontSize: 10,
+            letterSpacing: ".15em",
+            textTransform: "uppercase",
+            marginBottom: 13,
+          }}
+        >
+          ATM IMPLIED VOLATILITY · FIVE STRIKES
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(5,minmax(0,1fr))",
+            gap: 10,
+            marginBottom: 14,
+          }}
+        >
+          <SignalCard
+            title="ATM CENTRE STRIKE"
+            value={engine.atmIvCenterStrike > 0 ? fmtStrike(engine.atmIvCenterStrike) : "—"}
+            note="Nearest available chain strike"
+          />
+          <SignalCard
+            title="ATM CALL IV"
+            value={engine.atmCallIV > 0 ? `${fmt(engine.atmCallIV)}%` : "—"}
+            note="Five-strike average"
+          />
+          <SignalCard
+            title="ATM PUT IV"
+            value={engine.atmPutIV > 0 ? `${fmt(engine.atmPutIV)}%` : "—"}
+            note="Five-strike average"
+          />
+          <SignalCard
+            title="COMBINED ATM IV"
+            value={engine.combinedATMIV > 0 ? `${fmt(engine.combinedATMIV)}%` : "—"}
+            note={`IV regime: ${engine.ivRegime || "UNAVAILABLE"}`}
+          />
+          <SignalCard
+            title="INDIA VIX"
+            value={engine.vix > 0 ? fmt(engine.vix) : "—"}
+            note={`Change ${engine.vixChange > 0 ? "+" : ""}${fmt(engine.vixChange)}`}
+            color={engine.vixChange > 0 ? RED : engine.vixChange < 0 ? GREEN : TEXT}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+            gap: 8,
+            padding: "9px 12px",
+            borderBottom: `1px solid ${LINE}`,
+            color: MUTED,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".1em",
+          }}
+        >
+          <div>STRIKE</div>
+          <div style={{ textAlign: "right" }}>CALL IV</div>
+          <div style={{ textAlign: "right" }}>PUT IV</div>
+        </div>
+
+        {engine.atmIvRows.length > 0 ? (
+          engine.atmIvRows.map((row: OptionRow) => (
+            <div
+              key={row[6]}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+                gap: 8,
+                padding: "9px 12px",
+                borderBottom: `1px solid ${LINE}`,
+                fontSize: 12,
+                fontFamily: "Consolas, monospace",
+              }}
+            >
+              <div style={{ color: row[6] === engine.atmIvCenterStrike ? AMBER : TEXT, fontWeight: row[6] === engine.atmIvCenterStrike ? 800 : 500 }}>
+                {fmtStrike(row[6])}{row[6] === engine.atmIvCenterStrike ? " · ATM" : ""}
+              </div>
+              <div style={{ color: row[3] > 0 ? GREEN : MUTED, textAlign: "right" }}>
+                {row[3] > 0 ? `${fmt(row[3])}%` : "—"}
+              </div>
+              <div style={{ color: row[9] > 0 ? RED : MUTED, textAlign: "right" }}>
+                {row[9] > 0 ? `${fmt(row[9])}%` : "—"}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ color: MUTED, fontSize: 12, padding: 12 }}>
+            ATM option-chain IV data is currently unavailable.
+          </div>
+        )}
+
+        <div style={{ color: MUTED, fontSize: 10, marginTop: 10, lineHeight: 1.5 }}>
+          IV regime is based on Combined ATM IV; full-chain average IV remains available separately for comparison. India VIX is a broad-market volatility indicator, not a directional signal.
+        </div>
       </div>
 
       {/* =====================================================
